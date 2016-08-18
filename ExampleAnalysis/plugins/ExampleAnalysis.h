@@ -50,9 +50,29 @@ class ExampleAnalysis : public edm::one::EDAnalyzer<edm::one::SharedResources>  
       virtual void endJob() override;
 
       // ----------member data ---------------------------
+      TFileDirectory* vtxDir;
       TFileDirectory* muDir;
-      TH1D* muPt;
+      TFileDirectory* eleDir;
+      TFileDirectory* tauDir;
+      TFileDirectory* photonDir;
+      TFileDirectory* jetDir;
+      TFileDirectory* metDir;
+
+      TH1I* hnVtx;
+      TH1D* hmuPt;
+      TH1D* helePt;
+      TH1D* htauPt;
+      TH1D* hphotonuPt;
+      TH1D* hjetPt;
+      TH1D* hmetEt;
+      
+      edm::EDGetTokenT<reco::VertexCollection> vtxToken_;
       edm::EDGetTokenT<pat::MuonCollection> muonToken_;
+      edm::EDGetTokenT<pat::ElectronCollection> electronToken_;
+      edm::EDGetTokenT<pat::TauCollection> tauToken_;
+      edm::EDGetTokenT<pat::PhotonCollection> photonToken_;
+      edm::EDGetTokenT<pat::JetCollection> jetToken_;
+      edm::EDGetTokenT<pat::METCollection> metToken_;
 };
 
 #endif
