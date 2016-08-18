@@ -18,15 +18,6 @@
 
 #include "IndiaCMSTutorial/ExampleAnalysis/plugins/ExampleAnalysis.h"
 
-#include "DataFormats/VertexReco/interface/VertexFwd.h"
-#include "DataFormats/VertexReco/interface/Vertex.h"
-#include "DataFormats/PatCandidates/interface/Muon.h"
-#include "DataFormats/PatCandidates/interface/Electron.h"
-#include "DataFormats/PatCandidates/interface/Tau.h"
-#include "DataFormats/PatCandidates/interface/Photon.h"
-#include "DataFormats/PatCandidates/interface/Jet.h"
-#include "DataFormats/PatCandidates/interface/MET.h"
-#include "DataFormats/PatCandidates/interface/PackedCandidate.h"
 //
 // constructors and destructor
 //
@@ -37,7 +28,7 @@ ExampleAnalysis::ExampleAnalysis(const edm::ParameterSet& iConfig):
    usesResource("TFileService");
    edm::Service<TFileService> outFile;
    muDir = new TFileDirectory(outFile->mkdir("Muon"));
-   muPt = mudir->make<TH1F>("muonPt","MuonPT;p_T;#entries",500,0.,1000.);
+   muPt = muDir->make<TH1D>("muonPt","MuonPT;p_T;#entries",500,0.,1000.);
 }
 
 

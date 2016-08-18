@@ -1,5 +1,5 @@
-#ifndef 
-#define
+#ifndef __ZPrime_h
+#define __ZPrime_h
 // system include files
 #include <memory>
 

@@ -1,6 +1,6 @@
 import FWCore.ParameterSet.Config as cms
 
-process.exampleminiAOD = cms.EDAnalyzer("ExampleAnalysis",
+exampleminiAOD = cms.EDAnalyzer("ExampleAnalysis",
     vertices = cms.InputTag("offlineSlimmedPrimaryVertices"),
     muons = cms.InputTag("slimmedMuons"),
     electrons = cms.InputTag("slimmedElectrons"),

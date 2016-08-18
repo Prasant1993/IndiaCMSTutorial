@@ -1,3 +1,5 @@
+#ifndef __ZTnP_h
+#define __ZTnP_h
 // -*- C++ -*-
 //
 // Package:    IndiaCMSTutorial/ZTnP
@@ -24,13 +26,6 @@
 //
 // class declaration
 //
-
-// If the analyzer does not use TFileService, please remove
-// the template argument to the base class so the class inherits
-// from  edm::one::EDAnalyzer<> and also remove the line from
-// constructor "usesResource("TFileService");"
-// This will improve performance in multithreaded jobs.
-
 class ZTnP : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
    public:
       explicit ZTnP(const edm::ParameterSet&);
@@ -46,3 +41,4 @@ class ZTnP : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
 
       // ----------member data ---------------------------
 };
+#endif

@@ -7,7 +7,7 @@
 */
 // constructors and destructor
 //
-#include "IndiaCMSTutorial/Zprime/plugins/Zprime.h"
+#include "IndiaCMSTutorial/Zprime/plugins/ZPrime.h"
 ZPrime::ZPrime(const edm::ParameterSet& iConfig)
 
 {
