@@ -62,9 +62,9 @@ class ExampleAnalysis : public edm::one::EDAnalyzer<edm::one::SharedResources>  
       TH1D* hmuPt;
       TH1D* helePt;
       TH1D* htauPt;
-      TH1D* hphotonuPt;
+      TH1D* hphotonPt;
       TH1D* hjetPt;
-      TH1D* hmetEt;
+      TH1D* hmetPt;
       
       edm::EDGetTokenT<reco::VertexCollection> vtxToken_;
       edm::EDGetTokenT<pat::MuonCollection> muonToken_;

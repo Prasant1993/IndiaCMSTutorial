@@ -36,7 +36,7 @@ ExampleAnalysis::ExampleAnalysis(const edm::ParameterSet& iConfig):
    vtxDir = new TFileDirectory(outFile->mkdir("Vertex"));
    muDir = new TFileDirectory(outFile->mkdir("Muon"));
    eleDir = new TFileDirectory(outFile->mkdir("Electron"));
-   tauDir = new TFileDirectory(outFile->mkdir("Tau");
+   tauDir = new TFileDirectory(outFile->mkdir("Tau"));
    photonDir = new TFileDirectory(outFile->mkdir("Phton"));
    jetDir = new TFileDirectory(outFile->mkdir("Jet"));
    metDir = new TFileDirectory(outFile->mkdir("MET"));
@@ -44,10 +44,10 @@ ExampleAnalysis::ExampleAnalysis(const edm::ParameterSet& iConfig):
    hnVtx = vtxDir->make<TH1I>("nVtx","NVertices;nVertex;#entries",40,-0.5,39.5);
    hmuPt = muDir->make<TH1D>("pt","Muon p_T;p_T;#entries",500,0.,1000.); 
    helePt = eleDir->make<TH1D>("pt","Electron p_T;p_T;#entries",500,0.,1000.);
-   htauPt = tau->make<TH1D>("pt","Tau p_T;p_T;#entries",500,0.,1000.);
-   hphotonuPt = photonDir->make<TH1D>("pt","Photon p_T;p_T;#entries",500,0.,1000.);
+   htauPt = tauDir->make<TH1D>("pt","Tau p_T;p_T;#entries",500,0.,1000.);
+   hphotonPt = photonDir->make<TH1D>("pt","Photon p_T;p_T;#entries",500,0.,1000.);
    hjetPt = jetDir->make<TH1D>("pt","Jet p_T;p_T;#entries",500,0.,1000.);
-   hmetEt = metDir->make<TH1D>("et","MET E_T;E_T;#entries",500,0.,1000.);
+   hmetPt = metDir->make<TH1D>("et","MET E_T;E_T;#entries",500,0.,1000.);
 
 }
 
@@ -73,7 +73,7 @@ ExampleAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup
   edm::Handle<reco::VertexCollection> vertices;
   iEvent.getByToken(vtxToken_, vertices);
   if (vertices->empty()) return; // skip the event if no PV found
-  const reco::Vertex &PV = vertices->front();
+  //const reco::Vertex &PV = vertices->front();
   hnVtx->Fill(vertices->size());
 
   //muons
@@ -89,7 +89,7 @@ ExampleAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup
   iEvent.getByToken(electronToken_, electrons);
   for (const pat::Electron &el : *electrons) {
     if (el.pt() < 5) continue;
-    helePt->Fill(ele.pt());
+    helePt->Fill(el.pt());
   }
   
   //photons
