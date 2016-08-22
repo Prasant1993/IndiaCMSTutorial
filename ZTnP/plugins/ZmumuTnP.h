@@ -25,7 +25,6 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
-#include "DataFormats/PatCandidates/interface/Electron.h"
 
 //
 // class declaration
@@ -48,14 +47,14 @@ class ZmumuTnP : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
       virtual void beginJob() override;
       virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
       virtual void endJob() override;
-
+      
+      double mupfiso(const pat::Muon& mu, double fsrPhotonEtSum);
       // ----------member data ---------------------------
       TFileDirectory* zee;
       TFileDirectory* zmumu;
 
       edm::EDGetTokenT<reco::VertexCollection> vtxToken_;
       edm::EDGetTokenT<pat::MuonCollection> muonToken_;
-      edm::EDGetTokenT<pat::ElectronCollection> electronToken_;
        
       std::vector<pat::Muon>  selectedMu_;     
 };

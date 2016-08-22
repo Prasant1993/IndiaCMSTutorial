@@ -1,9 +1,7 @@
 #include "IndiaCMSTutorial/ZmumuTnP/plugins/ZmumuTnP.h"
 ZmumuTnP::ZmumuTnP(const edm::ParameterSet& iConfig) :
   vtxToken_(consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("vertices"))),
-  muonToken_(consumes<pat::MuonCollection>(iConfig.getParameter<edm::InputTag>("muons"))),
-  electronToken_(consumes<pat::ElectronCollection>(iConfig.getParameter<edm::InputTag>("electrons")))
-
+  muonToken_(consumes<pat::MuonCollection>(iConfig.getParameter<edm::InputTag>("muons")))
 {
    //now do what ever initialization is needed
    usesResource("TFileService");
@@ -59,14 +57,33 @@ ZmumuTnP::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   
 
 }
-
+//tag selection
+//pt > 20. and rel_iso03 < 0.35
+//tag + probe pair = OS + 80 < mass < 100
 void ZmumuTnP::selectZmumu() {
   for(unsigned int i = 0; i < selectedMu_.size(); i++) {
-      
-    if()  
+    double tagrelIso = pfiso(selectedMu_[i])/selectedMu_[i].pt();  
+    if(tagrelIso >= 0.35)     continue;
+    if(selectedMu_[i].pt() <= 20.)    continue;
+    TLorentzVector tagP4 = getP4(selectedMu_[i]);
+    int tagcharge =  selectedMu_[i].charge();  
     for(unsigned int j = 0; j < selectedMu_.size(); j++) {
+      int probecharge = selectedMu_[j].charge();
+      if(tagcharge + probecharge != 0)      continue;
+      TLorentzVector probeP4 = getP4(selectedMu_[j]);
+      double mz = (tagP4 + probeP4).M();
+      if( mz <= 80. || mz >= 100. )   continue;
+      
     }
   }
+}
+
+//function to compute muon isolation
+
+double ZmumuTnP::pfiso(const pat::Muon& mu) {
+  return (mu.pfIsolationR03().sumChargedHadronPt 
+          + std::max(0., mu.pfIsolationR03().sumNeutralHadronEt
+                       + mu.pfIsolationR03().sumPhotonEt - 0.5 * mu.pfIsolationR03().sumPUPt));
 }
 // ------------ method called once each job just before starting event loop  ------------
 void 
