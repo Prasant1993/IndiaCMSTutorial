@@ -1,7 +1,6 @@
 #include "IndiaCMSTutorial/ZTnP/plugins/ZeeTnP.h"
 ZeeTnP::ZeeTnP(const edm::ParameterSet& iConfig) :
   vtxToken_(consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("vertices"))),
-  muonToken_(consumes<pat::MuonCollection>(iConfig.getParameter<edm::InputTag>("muons"))),
   electronToken_(consumes<pat::ElectronCollection>(iConfig.getParameter<edm::InputTag>("electrons")))
 
 {
@@ -35,7 +34,7 @@ ZeeTnP::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   iEvent.getByToken(vtxToken_, vertices);
   if (vertices->empty()) return; // skip the event if no PV found
   const reco::Vertex &PV = vertices->front();
-  hnVtx->Fill(vertices->size());
+  //hnVtx->Fill(vertices->size());
 
   //muons
   edm::Handle<pat::MuonCollection> muons;

@@ -15,9 +15,10 @@
 // system include files
 #include <memory>
 #include <TDirectory.h>
+#include <TTree.h>
 #include <TH1.h>
 #include <TH2.h>
-
+#include <TLorentzVector.h>
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/one/EDAnalyzer.h"
@@ -30,6 +31,7 @@
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "DataFormats/VertexReco/interface/VertexFwd.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
 
@@ -49,19 +51,21 @@ class ZmumuTnP : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
         return P;
       }
       void selectZmumu();
-
+      
    private:
       virtual void beginJob() override;
       virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
       virtual void endJob() override;
       
-      double mupfiso(const pat::Muon& mu, double fsrPhotonEtSum);
+      double mupfiso(const pat::Muon& mu);
       // ----------member data ---------------------------
       edm::EDGetTokenT<reco::VertexCollection> vtxToken_;
       edm::EDGetTokenT<pat::MuonCollection> muonToken_;
        
       std::vector<pat::Muon>  selectedMu_;
       const static Int_t kMaxTnP = 8;
+      TTree* outTree_;
+      int nselectedMu;   
       int nTnP;
       float         TnP_pt[kMaxTnP];   
       float         TnP_eta[kMaxTnP];   

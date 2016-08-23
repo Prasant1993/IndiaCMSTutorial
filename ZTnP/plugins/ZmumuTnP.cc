@@ -1,5 +1,4 @@
-#include "TLorentzVector.h"
-#include "IndiaCMSTutorial/ZTnP/plugins/ZmumuTnP.h"
+#include "ZmumuTnP.h"
 
 ZmumuTnP::ZmumuTnP(const edm::ParameterSet& iConfig) :
   vtxToken_(consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("vertices"))),
@@ -7,8 +6,10 @@ ZmumuTnP::ZmumuTnP(const edm::ParameterSet& iConfig) :
 {
    //now do what ever initialization is needed
    usesResource("TFileService");
-   edm::Service<TFileService> outTreeFile;
-   outTree_ = outTreeFile->make<TTree>("zmmtree","muTnP tree for iso");
+   edm::Service<TFileService> outFile;
+   outTree_ = outFile->make<TTree>("zmmtree","muTnP tree for iso");
+   outTree_->Branch("nselectedMu",&nselectedMu,"nselectedMu/I");
+   outTree_->Branch("nTnP",&nTnP,"nTnP/I");
    outTree_->Branch("TnP_pt",TnP_pt,"TnP_pt[nTnP]/F");
    outTree_->Branch("TnP_eta",TnP_eta,"TnP_eta[nTnP]/F");
    outTree_->Branch("TnP_phi",TnP_phi,"TnP_phi[nTnP]/F");
@@ -64,12 +65,13 @@ void
 ZmumuTnP::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
   selectedMu_.clear();
+  nTnP = 0;
   //vertices
   edm::Handle<reco::VertexCollection> vertices;
   iEvent.getByToken(vtxToken_, vertices);
   if (vertices->empty()) return; // skip the event if no PV found
   const reco::Vertex &PV = vertices->front();
-  hnVtx->Fill(vertices->size());
+  //hnVtx->Fill(vertices->size());
 
   //muons
   edm::Handle<pat::MuonCollection> muons;
@@ -91,16 +93,16 @@ ZmumuTnP::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     selectedMu_.push_back(mu);
   }
   if(selectedMu_.size() > 2)   selectZmumu();
-  
+  nselectedMu = selectedMu_.size();
+  outTree_->Fill();
 
 }
 //tag selection
 //pt > 20. and rel_iso03 < 0.35
 //tag + probe pair = OS + 80 < mass < 100
 void ZmumuTnP::selectZmumu() {
-  int nTnP = 0;
   for(unsigned int i = 0; i < selectedMu_.size(); i++) {
-    double tagrelIso = pfiso(selectedMu_[i])/selectedMu_[i].pt();  
+    double tagrelIso = mupfiso(selectedMu_[i])/selectedMu_[i].pt();  
     if(tagrelIso >= 0.35)     continue;
     if(selectedMu_[i].pt() <= 20.)    continue;
     TLorentzVector tagP4 = getP4(selectedMu_[i]);
@@ -112,7 +114,7 @@ void ZmumuTnP::selectZmumu() {
       TLorentzVector probeP4 = getP4(selectedMu_[j]);
       TLorentzVector TnP = (tagP4 + probeP4);
       if( TnP.M() <= 80. || TnP.M() >= 100. )   continue;
-      double proberelIso = pfiso(selectedMu_[j])/selectedMu_[j].pt();
+      double proberelIso = mupfiso(selectedMu_[j])/selectedMu_[j].pt();
       TnP_pt[nTnP] = TnP.Pt();   
       TnP_eta[nTnP] = TnP.Eta();   
       TnP_phi[nTnP] = TnP.Phi();   
@@ -161,7 +163,7 @@ void ZmumuTnP::selectZmumu() {
 
 //function to compute muon isolation
 
-double ZmumuTnP::pfiso(const pat::Muon& mu) {
+double ZmumuTnP::mupfiso(const pat::Muon& mu) {
   return (mu.pfIsolationR03().sumChargedHadronPt 
           + std::max(0., mu.pfIsolationR03().sumNeutralHadronEt
                        + mu.pfIsolationR03().sumPhotonEt - 0.5 * mu.pfIsolationR03().sumPUPt));

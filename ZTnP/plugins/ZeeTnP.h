@@ -14,7 +14,10 @@
 */
 // system include files
 #include <memory>
-
+#include <TDirectory.h>
+#include <TH1.h>
+#include <TH2.h>
+#include <TLorentzVector.h>
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/one/EDAnalyzer.h"
@@ -23,8 +26,11 @@
 #include "FWCore/Framework/interface/MakerMacros.h"
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
+#include "CommonTools/UtilAlgos/interface/TFileService.h"
+
+#include "DataFormats/VertexReco/interface/VertexFwd.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
-#include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/Electron.h"
 
 //
@@ -50,13 +56,11 @@ class ZeeTnP : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
       virtual void endJob() override;
 
       // ----------member data ---------------------------
-      TFileDirectory* zee;
-      TFileDirectory* zmumu;
+      //TFileDirectory* zee;
 
       edm::EDGetTokenT<reco::VertexCollection> vtxToken_;
-      edm::EDGetTokenT<pat::MuonCollection> muonToken_;
       edm::EDGetTokenT<pat::ElectronCollection> electronToken_;
        
-      std::vector<pat::Muon>  selectedMu_;     
+      //std::vector<pat::Electron>  selectedEle_;     
 };
 #endif
