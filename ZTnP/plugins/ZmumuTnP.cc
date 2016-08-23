@@ -1,4 +1,5 @@
-#include "IndiaCMSTutorial/ZmumuTnP/plugins/ZmumuTnP.h"
+#include "TLorentzVector.h"
+#include "IndiaCMSTutorial/ZTnP/plugins/ZmumuTnP.h"
 
 ZmumuTnP::ZmumuTnP(const edm::ParameterSet& iConfig) :
   vtxToken_(consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("vertices"))),
@@ -107,6 +108,7 @@ void ZmumuTnP::selectZmumu() {
     for(unsigned int j = 0; j < selectedMu_.size(); j++) {
       int probecharge = selectedMu_[j].charge();
       if(tagcharge + probecharge != 0)      continue;
+      if(nTnP >= 8)    continue; 
       TLorentzVector probeP4 = getP4(selectedMu_[j]);
       TLorentzVector TnP = (tagP4 + probeP4);
       if( TnP.M() <= 80. || TnP.M() >= 100. )   continue;
@@ -131,6 +133,7 @@ void ZmumuTnP::selectZmumu() {
       TnP_l2_mass[nTnP]= probeP4.M();   
       TnP_l2_charge[nTnP]= probecharge;   
       TnP_l2_relIso[nTnP]= proberelIso;
+      nTnP++;
       if(probeP4.Pt() <= 50.) {
         if(std::fabs(probeP4.Eta()) < 1.2 ) {
           mZmmAll_ptl50_barrel->Fill(TnP.M());

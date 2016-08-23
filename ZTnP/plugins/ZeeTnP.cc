@@ -1,4 +1,4 @@
-#include "IndiaCMSTutorial/ZeeTnP/plugins/ZeeTnP.h"
+#include "IndiaCMSTutorial/ZTnP/plugins/ZeeTnP.h"
 ZeeTnP::ZeeTnP(const edm::ParameterSet& iConfig) :
   vtxToken_(consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("vertices"))),
   muonToken_(consumes<pat::MuonCollection>(iConfig.getParameter<edm::InputTag>("muons"))),
@@ -28,6 +28,7 @@ ZeeTnP::~ZeeTnP()
 void
 ZeeTnP::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
+  /*
   selectedMu_.clear();
   //vertices
   edm::Handle<reco::VertexCollection> vertices;
@@ -57,16 +58,17 @@ ZeeTnP::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   }
   if(selectedMu_.size() > 2)   selectZmumu();
   
-
+  */
 }
 
 void ZeeTnP::selectZmumu() {
+  /*
   for(unsigned int i = 0; i < selectedMu_.size(); i++) {
       
     if()  
     for(unsigned int j = 0; j < selectedMu_.size(); j++) {
     }
-  }
+  }*/
 }
 // ------------ method called once each job just before starting event loop  ------------
 void 
