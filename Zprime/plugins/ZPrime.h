@@ -2,8 +2,14 @@
 #define __ZPrime_h
 // system include files
 #include <memory>
-
+#include <TDirectory.h>
+#include <TTree.h>
+#include <TH1.h>
+#include <TH2.h>
+#include <TLorentzVector.h>
+#include <vector>
 // user include files
+
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/one/EDAnalyzer.h"
 
@@ -35,7 +41,7 @@ struct Dimuon {
   int mu2Charge;
   double mZp;
   double avgPt;
-}
+};
 
 class ZPrime : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
    public:

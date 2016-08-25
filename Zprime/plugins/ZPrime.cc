@@ -8,15 +8,16 @@
 // constructors and destructor
 //
 #include "IndiaCMSTutorial/Zprime/plugins/ZPrime.h"
-ZPrime::ZPrime(const edm::ParameterSet& iConfig)
-
+ZPrime::ZPrime(const edm::ParameterSet& iConfig) :
+  vtxToken_(consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("vertices"))),
+  muonToken_(consumes<pat::MuonCollection>(iConfig.getParameter<edm::InputTag>("muons")))
 {
   //now do what ever initialization is needed
   usesResource("TFileService");
   edm::Service<TFileService> outFile;
-  mZp_reco = outFile->make<TH1D>("mZp","ZRrime Mass;m_Zp;#entries",1500,0.,3000.); 
-  mu1Pt_reco = outFile->make<TH1D>("muon1Pt","Leading lepton Pt;mu1_pT;#entries",1500,0.,3000.);;
-  mu2Pt_reco = outFile->make<TH1D>("muon2Pt","Sub-Leading lepton Pt;mu2_pT;#entries",1500,0.,3000.);;
+  mZp_reco = outFile->make<TH1D>("mZp","ZRrime Mass;m_Zp;#entries",2000,0.,4000.); 
+  mu1Pt_reco = outFile->make<TH1D>("muon1Pt","Leading lepton Pt;mu1_pT;#entries",2000,0.,4000.);
+  mu2Pt_reco = outFile->make<TH1D>("muon2Pt","Sub-Leading lepton Pt;mu2_pT;#entries",2000,0.,4000.);
 
 }
 
@@ -44,18 +45,18 @@ ZPrime::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   iEvent.getByToken(vtxToken_, vertices);
   if (vertices->empty()) return; // skip the event if no PV found
   const reco::Vertex &PV = vertices->front();
-  //hnVtx->Fill(vertices->size());
 
   //muons
   edm::Handle<pat::MuonCollection> muons;
   iEvent.getByToken(muonToken_, muons);
+  
   for (const pat::Muon &mu : *muons) {
     if (!mu.isGlobalMuon())   continue;
     if (!mu.isTrackerMuon())  continue;
     const reco::TrackRef& muTrack = mu.muonBestTrack();
     if (muTrack->ptError()/muTrack->pt() > 0.3)  continue;
     if (muTrack->pt() <= 53.)  continue;
-    if (std::fabs(mu.muTrack->dxy(PV.position())) > 0.2)  continue;
+    if (std::fabs(muTrack->dxy(PV.position())) > 0.2)  continue;
     if (std::fabs(mu.dB()) > 0.2)    continue;
     if (mu.isolationR03().sumPt / mu.innerTrack()->pt() > 0.10 )  continue;
     if (mu.globalTrack()->hitPattern().trackerLayersWithMeasurement() <= 5)  continue;
@@ -64,7 +65,9 @@ ZPrime::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     if (mu.numberOfMatchedStations() < 2)  continue;
     selectedMu_.push_back(mu);
   }
-  if(selectedMu_ >= 2)   selectrecoDimuons();
+  //std::cout << "Muon Size=" << muons->size() << "::Selected>>" << selectedMu_.size() << std::endl;
+  if(selectedMu_.size() >= 2)   selectrecoDimuons();
+  //std::cout << "Zprime Candidate=" << bestZpcand_.mZp << std::endl;
   if(bestZpcand_.mZp > 0.) {
     mZp_reco->Fill(bestZpcand_.mZp);
     if(bestZpcand_.mu1P4.Pt() > bestZpcand_.mu2P4.Pt()) {
@@ -76,7 +79,7 @@ ZPrime::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     }
   }
 }
-
+             
 void ZPrime::selectrecoDimuons() {
   bestZpcand_.mu1P4.SetPtEtaPhiE(0.,0.,0.,0.);
   bestZpcand_.mu2P4.SetPtEtaPhiE(0.,0.,0.,0.);
@@ -86,9 +89,6 @@ void ZPrime::selectrecoDimuons() {
     TLorentzVector mu1P4 = getP4(selectedMu_[i]);
     for(unsigned int j = i+1; j<selectedMu_.size(); j++) { 
       if(selectedMu_[i].charge() + selectedMu_[j].charge() != 0)   continue;
-      if(selectedMu_[i].triggerObjectMatchByPath("HLT_IsoMu20_v*",true) == nullptr 
-         && selectedMu_[j].triggerObjectMatchByPath("HLT_IsoMu20_v*",true) == nullptr)
-        continue;
       TLorentzVector mu2P4 = getP4(selectedMu_[j]);
       if(bestZpcand_.avgPt < (mu1P4.Pt() + mu2P4.Pt())/2.) {
         bestZpcand_.mu1P4 = mu1P4;
@@ -96,6 +96,7 @@ void ZPrime::selectrecoDimuons() {
         bestZpcand_.mZp = (mu1P4 + mu2P4).M();
         bestZpcand_.avgPt = (mu1P4.Pt() + mu2P4.Pt())/2.;
       }
+    }
   }
 }
 
