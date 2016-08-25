@@ -1,5 +1,11 @@
 <use name="FWCore/Framework"/>
 <use name="FWCore/PluginManager"/>
 <use name="FWCore/ParameterSet"/>
-<use name="IndiaCMSTutorial/Zprime"/>
+<use name="CommonTools/UtilAlgos"/>
+<use name="PhysicsTools/UtilAlgos"/>
+<use name="DataFormats/VertexReco"/>
+<use name="DataFormats/PatCandidates"/>
+<use name="DataFormats/Common"/>
+<use name="HLTrigger/HLTcore"/>
+<use name="DataFormats/HepMCCandidate"/>
 <flags EDM_PLUGIN="1"/>
