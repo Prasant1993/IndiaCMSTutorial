@@ -19,6 +19,8 @@
 #include <TH1.h>
 #include <TH2.h>
 #include <TLorentzVector.h>
+#include <TVector2.h>
+
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/one/EDAnalyzer.h"
@@ -34,6 +36,9 @@
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
+#include "DataFormats/Common/interface/TriggerResults.h"
+#include "DataFormats/PatCandidates/interface/TriggerObjectStandAlone.h"
+#include "DataFormats/PatCandidates/interface/PackedTriggerPrescales.h"
 
 //
 // class declaration
@@ -58,11 +63,15 @@ class ZmumuTnP : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
       virtual void endJob() override;
       
       double mupfiso(const pat::Muon& mu);
+      bool isMatchedtoTrigger (const pat::Muon& mu, double hlt2reco_deltaRmax);
       // ----------member data ---------------------------
       edm::EDGetTokenT<reco::VertexCollection> vtxToken_;
       edm::EDGetTokenT<pat::MuonCollection> muonToken_;
+	  edm::EDGetTokenT<edm::TriggerResults> triggerBits_;
+	  edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> triggerObjects_;
        
       std::vector<pat::Muon>  selectedMu_;
+      std::vector<pat::TriggerObjectStandAlone> triggerObj_;
       const static Int_t kMaxTnP = 8;
       TTree* outTree_;
       int nselectedMu;   
@@ -87,6 +96,12 @@ class ZmumuTnP : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
       float         TnP_l2_mass[kMaxTnP];   
       int           TnP_l2_charge[kMaxTnP];   
       float         TnP_l2_relIso[kMaxTnP];
+      
+      std::string hltPathName;
+      std::string hltFilterName;
+	  double DeltaR_, dEta, dPhi, dR;
+	  bool isPath, isFilter, isMatched;
+	  edm::TriggerNames names;	
       //Histogram booking
       TFileDirectory* histoDir;
       TH1D* mZmmAll_ptl50_barrel;
