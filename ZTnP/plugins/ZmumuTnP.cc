@@ -107,17 +107,18 @@ ZmumuTnP::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     selectedMu_.push_back(mu);
   }
   
-  const edm::TriggerNames &names = iEvent.triggerNames(*triggerBits);
+  names = iEvent.triggerNames(*triggerBits);
   unsigned int index=names.triggerIndex(hltPathName);
   bool isPassed=triggerBits->accept(index);
   std::cout<<hltPathName<<"\tindex= "<<index<<"\tPassed="<<isPassed<<std::endl;
 
   if(!isPassed){
-	  std::cout<<hltPathName<<"is not fired"<<std::endl;
+	  std::cout<<hltPathName<<" is not fired"<<std::endl;
 	  return;
   }	  	
   
   for (pat::TriggerObjectStandAlone obj : *triggerObjects) {
+		
 		triggerObj_.push_back(obj);			
   }
   	
@@ -137,12 +138,15 @@ void ZmumuTnP::selectZmumu() {
     TLorentzVector tagP4 = getP4(selectedMu_[i]);
     int tagcharge =  selectedMu_[i].charge();  
     for(unsigned int j = 0; j < selectedMu_.size(); j++) {
-      int probecharge = selectedMu_[j].charge();
+      
+	  int probecharge = selectedMu_[j].charge();
       if(tagcharge + probecharge != 0)      continue;
       if(nTnP >= 8)    continue; 
       isMatched=isMatchedtoTrigger(selectedMu_[j], DeltaR_);
-      TLorentzVector probeP4 = getP4(selectedMu_[j]);
-      
+      std::cout<<"probeIndex= "<<j<<"\tisMatchedtoTrigger= "<<(int)isMatched<<std::endl;
+	  if(!isMatched) continue;
+	  TLorentzVector probeP4 = getP4(selectedMu_[j]);
+      isMatched=false;
       TLorentzVector TnP = (tagP4 + probeP4);
       if( TnP.M() <= 80. || TnP.M() >= 100. )   continue;
       double proberelIso = mupfiso(selectedMu_[j])/selectedMu_[j].pt();
@@ -206,21 +210,19 @@ bool ZmumuTnP::isMatchedtoTrigger (const pat::Muon& mu, double hlt2reco_deltaRma
 	bool isMatch=false;
     
 	for(unsigned int i = 0; i < triggerObj_.size(); i++){            
-			
+		triggerObj_[i].unpackPathNames(names);	
 		isPath = triggerObj_[i].hasPathName(hltPathName);
 		isFilter =  triggerObj_[i].hasFilterLabel(hltFilterName);      
 		if(!isPath || !isFilter) continue;
-		else{
-			dEta=mu.eta() - triggerObj_[i].eta();
-			dPhi=TVector2:: Phi_mpi_pi(mu.phi() - triggerObj_[i].phi());
-			dR = sqrt(pow(dEta,2)+pow(dPhi,2));
-//			ptRatio= obj.pt()/mu.pt() ; 
-			if(dR < hlt2reco_deltaRmax){
-				isMatch=true;
-				std::cout<<"===== kinematic info of Matched Trigger object ===="<<std::endl;
-				std::cout<<"pt= "<<triggerObj_[i].pt()<<"\tabs(eta)= "<<fabs(triggerObj_[i].eta())<<"\tphi= "<<triggerObj_[i].phi()<<std::endl;
-				break;		
-			}
+		dEta= mu.eta() - triggerObj_[i].eta();
+		dPhi=TVector2::Phi_mpi_pi(mu.phi() - triggerObj_[i].phi());
+		dR = sqrt(pow(dEta,2)+pow(dPhi,2));
+//		ptRatio= obj.pt()/mu.pt() ; 
+		if(dR < hlt2reco_deltaRmax){
+			isMatch=true;
+			std::cout<<"===== Kinematic info of Matched Trigger object ===="<<std::endl;
+			std::cout<<"pt= "<<triggerObj_[i].pt()<<"\tabs(eta)= "<<fabs(triggerObj_[i].eta())<<"\tphi= "<<triggerObj_[i].phi()<<std::endl;
+			break;		
 		}
 	}
 	return isMatch;

@@ -101,7 +101,7 @@ class ZmumuTnP : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
       std::string hltFilterName;
 	  double DeltaR_, dEta, dPhi, dR;
 	  bool isPath, isFilter, isMatched;
-
+	  edm::TriggerNames names;	
       //Histogram booking
       TFileDirectory* histoDir;
       TH1D* mZmmAll_ptl50_barrel;

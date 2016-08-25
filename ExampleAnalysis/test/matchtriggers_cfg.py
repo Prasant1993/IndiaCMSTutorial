@@ -10,10 +10,10 @@ process.source = cms.Source("PoolSource",
 process.matchtriggerObject=cms.EDAnalyzer("TriggerMatcher",
 	electrons = cms.InputTag("slimmedElectrons"),
 	muons = cms.InputTag("slimmedMuons"),
-	bits = cms.InputTag("TriggerResults","","HLT"),
+	bits = cms.InputTag("TriggerResults","","HLT2"),
 	objects = cms.InputTag("selectedPatTrigger"),
-	hltPath = cms.string("HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_v4"),
-	hltFilter = cms.string("hltDiMuonGlb17Glb8RelTrkIsoFiltered0p4DzFiltered0p2"),
+	hltPath = cms.string("HLT_IsoMu22_v3"),
+	hltFilter = cms.string("hltL3crIsoL1sMu20L1f0L2f10QL3f22QL3trkIsoFiltered0p09"),
 	DeltaR = cms.double(0.1),
 )	
 process.p = cms.Path(process.matchtriggerObject)

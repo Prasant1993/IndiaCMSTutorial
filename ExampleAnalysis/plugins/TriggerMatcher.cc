@@ -51,6 +51,7 @@ class TriggerMatcher : public edm::EDAnalyzer {
 	bool isPassed, isPath, isFilter;
 	const static Int_t maxSize = 10;
 
+	int ele_size, mu_size;
 	double trigEle_Pt[maxSize];
 	double trigEle_Eta[maxSize];
 	double trigEle_Phi[maxSize];
@@ -79,23 +80,25 @@ triggerObjects_(consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getPara
 //	hlt2reco_ptRatio=iConfig.getParameter<double>("PtRatio");
 
 //	usesResource("TFileService"); 
-	outFile=new TFile("TriggerTree","RECREATE");
+	outFile=new TFile("TriggerTree.root","RECREATE");
 	outFile->cd();
 	trigObjInfo_=new TTree("matchedTrigObjects","tree for matched Trigger Objects");
-	
-	trigObjInfo_->Branch("Ele_Pt",trigEle_Pt,"trigEle_Pt[maxSize]/F");
-	trigObjInfo_->Branch("Ele_Eta",trigEle_Eta,"trigEle_Eta[maxSize]/F");
-	trigObjInfo_->Branch("Ele_Phi",trigEle_Phi,"trigEle_Phi[maxSize]/F");
-//	trigObjInfo_->Branch("Ele_E",trigEle_E[maxSize],"trigEle_E[maxSize]/D");
-	trigObjInfo_->Branch("Ele_DeltaR",trigEle_DeltaR,"trigEle_DeltaR[maxSize]/F");
-	trigObjInfo_->Branch("Ele_PtRatio",trigEle_PtRatio,"trigEle_PtRatio[maxSize]/F");
 
-	trigObjInfo_->Branch("Mu_Pt",trigMu_Pt,"trigMu_Pt[maxSize]/F");
-	trigObjInfo_->Branch("Mu_Eta",trigMu_Eta,"trigMu_Eta[maxSize]/F");
-	trigObjInfo_->Branch("Mu_Phi",trigMu_Phi,"trigMu_Phi[maxSize]/F");
+	trigObjInfo_->Branch("ele_size",&ele_size);	
+	trigObjInfo_->Branch("trigEle_Pt",trigEle_Pt,"trigEle_Pt[ele_size]/D");
+	trigObjInfo_->Branch("trigEle_Eta",trigEle_Eta,"trigEle_Eta[ele_size]/D");
+	trigObjInfo_->Branch("trigEle_Phi",trigEle_Phi,"trigEle_Phi[ele_size]/D");
+//	trigObjInfo_->Branch("Ele_E",trigEle_E[maxSize],"trigEle_E[maxSize]/D");
+	trigObjInfo_->Branch("trigEle_DeltaR",trigEle_DeltaR,"trigEle_DeltaR[ele_size]/D");
+	trigObjInfo_->Branch("trigEle_PtRatio",trigEle_PtRatio,"trigEle_PtRatio[ele_size]/D");
+
+	trigObjInfo_->Branch("mu_size",&mu_size);	
+	trigObjInfo_->Branch("trigMu_Pt",trigMu_Pt,"trigMu_Pt[mu_size]/D");
+	trigObjInfo_->Branch("trigMu_Eta",trigMu_Eta,"trigMu_Eta[mu_size]/D");
+	trigObjInfo_->Branch("trigMu_Phi",trigMu_Phi,"trigMu_Phi[mu_size]/D");
 //	trigObjInfo_->Branch("Mu_E",trigMu_E[maxSize],"trigMu_E[maxSize]/D");
-	trigObjInfo_->Branch("Mu_DeltaR",trigMu_DeltaR,"trigMu_DeltaR[maxSize]/F");
-	trigObjInfo_->Branch("Mu_PtRatio",trigMu_PtRatio,"trigMu_PtRatio[maxSize]/F");
+	trigObjInfo_->Branch("trigMu_DeltaR",trigMu_DeltaR,"trigMu_DeltaR[mu_size]/D");
+	trigObjInfo_->Branch("trigMu_PtRatio",trigMu_PtRatio,"trigMu_PtRatio[mu_size]/D");
 		
 }
 
@@ -133,47 +136,45 @@ TriggerMatcher::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 		return;
 	}	
 	
-	ii=0;	
-	
+	ele_size=0;	
 	for (const pat::Electron &el : *electrons){
-	
+		if (el.pt()<5.0) continue;		
 		for (pat::TriggerObjectStandAlone obj : *triggerObjects) {
+			obj.unpackPathNames(names);
 			isPath = obj.hasPathName(hltPathName);
-			isFilter =  obj.hasFilterLabel(hltFilterName);
-					
+			isFilter =  obj.hasFilterLabel(hltFilterName);	
 			if(!isPath || !isFilter) continue;
-			else{
-				dEta=el.eta() - obj.eta();
-				dPhi=TVector2:: Phi_mpi_pi(el.phi() - obj.phi());
-				dR = sqrt(pow(dEta,2)+pow(dPhi,2));
-				ptRatio= obj.pt()/el.pt() ; 
-				if(dR < hlt2reco_DeltaR){
-					trigEle_Pt[ii]= obj.pt(); trigEle_Eta[ii]=obj.eta(); trigEle_Phi[ii]=obj.phi(); //trigEle_E[ii]=obj.E();
-					trigEle_DeltaR[ii]=dR; trigEle_PtRatio[ii]=ptRatio;
-					ii++;
-				} 		
-			}
+			dEta=el.eta() - obj.eta();
+			dPhi=TVector2:: Phi_mpi_pi(el.phi() - obj.phi());
+			dR = sqrt(pow(dEta,2)+pow(dPhi,2));
+			ptRatio= obj.pt()/el.pt() ; 
+			if(dR < hlt2reco_DeltaR){
+				trigEle_Pt[ele_size]= obj.pt(); trigEle_Eta[ele_size]=obj.eta(); trigEle_Phi[ele_size]=obj.phi(); //trigEle_E[ii]=obj.E();
+				trigEle_DeltaR[ele_size]=dR; trigEle_PtRatio[ele_size]=ptRatio;
+				ele_size++;
+				break;
+			} 		
 		}
 	}	 
 	
-	ii=0;		
+	mu_size=0;		
 	for (const pat::Muon &mu : *muons) {
-    
+		if(mu.pt()<5.0) continue; 		  
         for (pat::TriggerObjectStandAlone obj : *triggerObjects) {            
+			obj.unpackPathNames(names);	
             isPath = obj.hasPathName(hltPathName);
             isFilter =  obj.hasFilterLabel(hltFilterName);      
             if(!isPath || !isFilter) continue;
-            else{
-                dEta=mu.eta() - obj.eta();
-                dPhi=TVector2::Phi_mpi_pi(mu.phi() - obj.phi());
-                dR = sqrt(pow(dEta,2)+pow(dPhi,2));
-                ptRatio= obj.pt()/mu.pt() ; 
-                if(dR < hlt2reco_DeltaR){
-					trigMu_Pt[ii]= obj.pt(); trigMu_Eta[ii]=obj.eta(); trigMu_Phi[ii]=obj.phi(); //trigMu_E[ii]=obj.E();
-					trigMu_DeltaR[ii]=dR; trigMu_PtRatio[ii]=ptRatio;
-					ii++;
-				}	        
-            }
+            dEta=mu.eta() - obj.eta();
+            dPhi=TVector2::Phi_mpi_pi(mu.phi() - obj.phi());
+            dR = sqrt(pow(dEta,2)+pow(dPhi,2));
+            ptRatio= obj.pt()/mu.pt() ; 
+            if(dR < hlt2reco_DeltaR){
+				trigMu_Pt[mu_size]= obj.pt(); trigMu_Eta[mu_size]=obj.eta(); trigMu_Phi[mu_size]=obj.phi(); //trigMu_E[ii]=obj.E();
+				trigMu_DeltaR[mu_size]=dR; trigMu_PtRatio[mu_size]=ptRatio;
+				mu_size++;
+				break;	
+			}	        
         }
 	}
 	
@@ -188,6 +189,9 @@ TriggerMatcher::beginJob()
 void 
 TriggerMatcher::endJob() 
 {
+	outFile->cd();
+	trigObjInfo_->Write();
+	outFile->Close();
 }
 
 void
