@@ -11,8 +11,12 @@
 ZPrime::ZPrime(const edm::ParameterSet& iConfig)
 
 {
-   //now do what ever initialization is needed
-   usesResource("TFileService");
+  //now do what ever initialization is needed
+  usesResource("TFileService");
+  edm::Service<TFileService> outFile;
+  mZp_reco = outFile->make<TH1D>("mZp","ZRrime Mass;m_Zp;#entries",1500,0.,3000.); 
+  mu1Pt_reco = outFile->make<TH1D>("muon1Pt","Leading lepton Pt;mu1_pT;#entries",1500,0.,3000.);;
+  mu2Pt_reco = outFile->make<TH1D>("muon2Pt","Sub-Leading lepton Pt;mu2_pT;#entries",1500,0.,3000.);;
 
 }
 
@@ -34,21 +38,66 @@ ZPrime::~ZPrime()
 void
 ZPrime::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
-   using namespace edm;
+  selectedMu_.clear();
+  //vertices
+  edm::Handle<reco::VertexCollection> vertices;
+  iEvent.getByToken(vtxToken_, vertices);
+  if (vertices->empty()) return; // skip the event if no PV found
+  const reco::Vertex &PV = vertices->front();
+  //hnVtx->Fill(vertices->size());
 
-
-
-#ifdef THIS_IS_AN_EVENT_EXAMPLE
-   Handle<ExampleData> pIn;
-   iEvent.getByLabel("example",pIn);
-#endif
-   
-#ifdef THIS_IS_AN_EVENTSETUP_EXAMPLE
-   ESHandle<SetupData> pSetup;
-   iSetup.get<SetupRecord>().get(pSetup);
-#endif
+  //muons
+  edm::Handle<pat::MuonCollection> muons;
+  iEvent.getByToken(muonToken_, muons);
+  for (const pat::Muon &mu : *muons) {
+    if (!mu.isGlobalMuon())   continue;
+    if (!mu.isTrackerMuon())  continue;
+    const reco::TrackRef& muTrack = mu.muonBestTrack();
+    if (muTrack->ptError()/muTrack->pt() > 0.3)  continue;
+    if (muTrack->pt() <= 53.)  continue;
+    if (std::fabs(mu.muTrack->dxy(PV.position())) > 0.2)  continue;
+    if (std::fabs(mu.dB()) > 0.2)    continue;
+    if (mu.isolationR03().sumPt / mu.innerTrack()->pt() > 0.10 )  continue;
+    if (mu.globalTrack()->hitPattern().trackerLayersWithMeasurement() <= 5)  continue;
+    if (mu.globalTrack()->hitPattern().numberOfValidPixelHits() == 0)  continue;
+    if (mu.globalTrack()->hitPattern().numberOfValidMuonHits() == 0)   continue;
+    if (mu.numberOfMatchedStations() < 2)  continue;
+    selectedMu_.push_back(mu);
+  }
+  if(selectedMu_ >= 2)   selectrecoDimuons();
+  if(bestZpcand_.mZp > 0.) {
+    mZp_reco->Fill(bestZpcand_.mZp);
+    if(bestZpcand_.mu1P4.Pt() > bestZpcand_.mu2P4.Pt()) {
+      mu1Pt_reco->Fill(bestZpcand_.mu1P4.Pt());
+      mu2Pt_reco->Fill(bestZpcand_.mu2P4.Pt());
+    } else {
+      mu2Pt_reco->Fill(bestZpcand_.mu1P4.Pt());
+      mu1Pt_reco->Fill(bestZpcand_.mu2P4.Pt());
+    }
+  }
 }
 
+void ZPrime::selectrecoDimuons() {
+  bestZpcand_.mu1P4.SetPtEtaPhiE(0.,0.,0.,0.);
+  bestZpcand_.mu2P4.SetPtEtaPhiE(0.,0.,0.,0.);
+  bestZpcand_.mZp = 0.;
+  bestZpcand_.avgPt = 0.;
+  for(unsigned int i = 0; i<selectedMu_.size(); i++) {
+    TLorentzVector mu1P4 = getP4(selectedMu_[i]);
+    for(unsigned int j = i+1; j<selectedMu_.size(); j++) { 
+      if(selectedMu_[i].charge() + selectedMu_[j].charge() != 0)   continue;
+      if(selectedMu_[i].triggerObjectMatchByPath("HLT_IsoMu20_v*",true) == nullptr 
+         && selectedMu_[j].triggerObjectMatchByPath("HLT_IsoMu20_v*",true) == nullptr)
+        continue;
+      TLorentzVector mu2P4 = getP4(selectedMu_[j]);
+      if(bestZpcand_.avgPt < (mu1P4.Pt() + mu2P4.Pt())/2.) {
+        bestZpcand_.mu1P4 = mu1P4;
+        bestZpcand_.mu2P4 = mu2P4;
+        bestZpcand_.mZp = (mu1P4 + mu2P4).M();
+        bestZpcand_.avgPt = (mu1P4.Pt() + mu2P4.Pt())/2.;
+      }
+  }
+}
 
 // ------------ method called once each job just before starting event loop  ------------
 void 
