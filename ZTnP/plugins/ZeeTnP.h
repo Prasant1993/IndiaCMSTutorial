@@ -18,6 +18,7 @@
 #include <TH1.h>
 #include <TH2.h>
 #include <TLorentzVector.h>
+#include <TVector2.h>
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/one/EDAnalyzer.h"
@@ -32,6 +33,10 @@
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/PatCandidates/interface/Electron.h"
+#include "FWCore/Common/interface/TriggerNames.h"
+#include "DataFormats/Common/interface/TriggerResults.h"
+#include "DataFormats/PatCandidates/interface/TriggerObjectStandAlone.h"
+#include "DataFormats/PatCandidates/interface/PackedTriggerPrescales.h"
 
 //
 // class declaration
@@ -60,6 +65,8 @@ class ZeeTnP : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
 
       edm::EDGetTokenT<reco::VertexCollection> vtxToken_;
       edm::EDGetTokenT<pat::ElectronCollection> electronToken_;
+  	  edm::EDGetTokenT<edm::TriggerResults> triggerBits_;
+	  edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> triggerObjects_;
        
       //std::vector<pat::Electron>  selectedEle_;     
 };

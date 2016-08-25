@@ -1,5 +1,6 @@
 #include <memory>
 #include <TDirectory.h>
+#include <TFile.h>
 #include <TTree.h>
 #include <TH1.h>
 #include <TH2.h>
@@ -11,6 +12,7 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "CommonTools/UtilAlgos/interface/TFileService.h"
 
 #include "DataFormats/Math/interface/deltaR.h"
 #include "FWCore/Common/interface/TriggerNames.h"
@@ -27,7 +29,7 @@
 class TriggerMatcher : public edm::EDAnalyzer {
    public:
       explicit TriggerMatcher(const edm::ParameterSet&);
-      ~TriggerMatcher() {}
+      ~TriggerMatcher();
 	  static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
    private:
 	  virtual void beginJob() override;
@@ -40,9 +42,29 @@ class TriggerMatcher : public edm::EDAnalyzer {
 	edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> triggerObjects_;
 	std::string hltPathName;
 	std::string hltFilterName;
-	double hlt2reco_DeltaR;
-	double hlt2reco_ptRatio;
+	double hlt2reco_DeltaR, dEta, dPhi, dR, ptRatio;
+//	double hlt2reco_ptRatio;
+	TFile* outFile;
 	TTree* trigObjInfo_;
+
+	unsigned int index, ii;
+	bool isPassed, isPath, isFilter;
+	const static Int_t maxSize = 10;
+
+	double trigEle_Pt[maxSize];
+	double trigEle_Eta[maxSize];
+	double trigEle_Phi[maxSize];
+//	double trigEle_E[maxSize];
+	double trigEle_DeltaR[maxSize];
+	double trigEle_PtRatio[maxSize];
+
+	double trigMu_Pt[maxSize];
+	double trigMu_Eta[maxSize];
+	double trigMu_Phi[maxSize];
+	double trigMu_DeltaR[maxSize];
+	double trigMu_PtRatio[maxSize];
+//	double trigMu_E[maxSize];
+
 };
 
 TriggerMatcher::TriggerMatcher(const edm::ParameterSet& iConfig):
@@ -54,30 +76,41 @@ triggerObjects_(consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getPara
 	hltPathName=iConfig.getParameter<std::string>("hltPath");
 	hltFilterName=iConfig.getParameter<std::string>("hltFilter"); 
 	hlt2reco_DeltaR=iConfig.getParameter<double>("DeltaR");
-	hlt2reco_ptRatio=iConfig.getParameter<double>("PtRatio");
+//	hlt2reco_ptRatio=iConfig.getParameter<double>("PtRatio");
 
-	useResouce("TFileService"); 
-	edm::Service<TFileService> outFile;
-	trigObjInfo_=outFile->make<TTree>("matchedTrigObjects","matchedTrigObjects");
-	trigObjInfo_->Branch("Pt",trigObj_Pt[maxSize],"trigObj_Pt[maxSize]/D");
-	trigObjInfo_->Branch("Eta",trigObj_Eta[maxSize],"trigObj_Eta[maxSize]/D");
-	trigObjInfo_->Branch("Phi",trigObj_Phi[maxSize],"trigObj_Phi[maxSize]/D");
-	trigObjInfo_->Branch("E",trigObj_E[maxSize],"trigObj_E[maxSize]/D");
-	trigObjInfo_->Branch("DeltaR",trigObj_DeltaR[maxSize],"trigObj_DeltaR[maxSize]/D");
-	trigObjInfo_->Branch("PtRatio",trigObj_PtRatio[maxSize],"trigObj_PtRatio[maxSize]/D");	
+//	usesResource("TFileService"); 
+	outFile=new TFile("TriggerTree","RECREATE");
+	outFile->cd();
+	trigObjInfo_=new TTree("matchedTrigObjects","tree for matched Trigger Objects");
+	
+	trigObjInfo_->Branch("Ele_Pt",trigEle_Pt,"trigEle_Pt[maxSize]/F");
+	trigObjInfo_->Branch("Ele_Eta",trigEle_Eta,"trigEle_Eta[maxSize]/F");
+	trigObjInfo_->Branch("Ele_Phi",trigEle_Phi,"trigEle_Phi[maxSize]/F");
+//	trigObjInfo_->Branch("Ele_E",trigEle_E[maxSize],"trigEle_E[maxSize]/D");
+	trigObjInfo_->Branch("Ele_DeltaR",trigEle_DeltaR,"trigEle_DeltaR[maxSize]/F");
+	trigObjInfo_->Branch("Ele_PtRatio",trigEle_PtRatio,"trigEle_PtRatio[maxSize]/F");
+
+	trigObjInfo_->Branch("Mu_Pt",trigMu_Pt,"trigMu_Pt[maxSize]/F");
+	trigObjInfo_->Branch("Mu_Eta",trigMu_Eta,"trigMu_Eta[maxSize]/F");
+	trigObjInfo_->Branch("Mu_Phi",trigMu_Phi,"trigMu_Phi[maxSize]/F");
+//	trigObjInfo_->Branch("Mu_E",trigMu_E[maxSize],"trigMu_E[maxSize]/D");
+	trigObjInfo_->Branch("Mu_DeltaR",trigMu_DeltaR,"trigMu_DeltaR[maxSize]/F");
+	trigObjInfo_->Branch("Mu_PtRatio",trigMu_PtRatio,"trigMu_PtRatio[maxSize]/F");
+		
 }
 
 TriggerMatcher::~TriggerMatcher()
 {
+   // do anything here that needs to be done at desctruction time
+   // (e.g. close files, deallocate resources etc.)
 
 }
 
 void
 TriggerMatcher::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
-{
-		
-	edm::Handle<pat::MuonCollection> muons_;
-	iEvent.getByToken(muonToken_, muons)
+{	
+	edm::Handle<pat::MuonCollection> muons;
+	iEvent.getByToken(muonToken_, muons);
 
 	edm::Handle<pat::ElectronCollection> electrons;
 	iEvent.getByToken(electronToken_, electrons);
@@ -91,47 +124,55 @@ TriggerMatcher::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 	const edm::TriggerNames &names = iEvent.triggerNames(*triggerBits);
 	
 	index=names.triggerIndex(hltPathName);
-	isPassed=triggerBits->accept(i);
-	
+	isPassed=triggerBits->accept(index);
+
+	std::cout<<hltPathName<<"\tindex= "<<index<<"\tPassed="<<isPassed<<std::endl;
+
 	if(!isPassed){
-		std::cout<<names.triggerNames(index)<<" is not fired"<<std::endl; 
+		std::cout<<hltPathName<<" is not fired"<<std::endl; 
 		return;
 	}	
 	
-	for (const pat::Electron &el : *electrons) {
+	ii=0;	
+	
+	for (const pat::Electron &el : *electrons){
+	
 		for (pat::TriggerObjectStandAlone obj : *triggerObjects) {
-			count++;	
-			obj.unpackPathNames(names);
-			ispath = obj.hasPathName(hltPathName);
-			isFilter =  obj.hasFilterLabel(hltFilterName);		
+			isPath = obj.hasPathName(hltPathName);
+			isFilter =  obj.hasFilterLabel(hltFilterName);
+					
 			if(!isPath || !isFilter) continue;
 			else{
 				dEta=el.eta() - obj.eta();
-				dPhi=TVector2::mpi_pi(el.phi() - obj.phi());
+				dPhi=TVector2:: Phi_mpi_pi(el.phi() - obj.phi());
 				dR = sqrt(pow(dEta,2)+pow(dPhi,2));
 				ptRatio= obj.pt()/el.pt() ; 
-				if(dR < hlt2reco_DeltaR)
-				 trigObj_Pt[ii]= obj.pt(); trigObj_Eta[ii]=obj.eta(); trigObj_Phi[ii]=obj.phi(); trigObj_E[ii]=obj.E();
-				 trigObj_DeltaR[ii]=dR; trigObj_PtRatio=ptRatio;		
+				if(dR < hlt2reco_DeltaR){
+					trigEle_Pt[ii]= obj.pt(); trigEle_Eta[ii]=obj.eta(); trigEle_Phi[ii]=obj.phi(); //trigEle_E[ii]=obj.E();
+					trigEle_DeltaR[ii]=dR; trigEle_PtRatio[ii]=ptRatio;
+					ii++;
+				} 		
 			}
 		}
 	}	 
-			
-	for (const pat::muon &mu : *muons) {
-        for (pat::TriggerObjectStandAlone obj : *triggerObjects) {
-            count++;    
-            obj.unpackPathNames(names);
-            ispath = obj.hasPathName(hltPathName);
+	
+	ii=0;		
+	for (const pat::Muon &mu : *muons) {
+    
+        for (pat::TriggerObjectStandAlone obj : *triggerObjects) {            
+            isPath = obj.hasPathName(hltPathName);
             isFilter =  obj.hasFilterLabel(hltFilterName);      
             if(!isPath || !isFilter) continue;
             else{
                 dEta=mu.eta() - obj.eta();
-                dPhi=TVector2::mpi_pi(mu.phi() - obj.phi());
+                dPhi=TVector2::Phi_mpi_pi(mu.phi() - obj.phi());
                 dR = sqrt(pow(dEta,2)+pow(dPhi,2));
                 ptRatio= obj.pt()/mu.pt() ; 
-                if(dR < hlt2reco_DeltaR)
-                 trigObj_Pt[ii]= obj.pt(); trigObj_Eta[ii]=obj.eta(); trigObj_Phi[ii]=obj.phi(); trigObj_E[ii]=obj.E();
-                 trigObj_DeltaR[ii]=dR; trigObj_PtRatio=ptRatio;        
+                if(dR < hlt2reco_DeltaR){
+					trigMu_Pt[ii]= obj.pt(); trigMu_Eta[ii]=obj.eta(); trigMu_Phi[ii]=obj.phi(); //trigMu_E[ii]=obj.E();
+					trigMu_DeltaR[ii]=dR; trigMu_PtRatio[ii]=ptRatio;
+					ii++;
+				}	        
             }
         }
 	}

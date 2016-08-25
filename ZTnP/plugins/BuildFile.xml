@@ -5,5 +5,7 @@
 <use name="PhysicsTools/UtilAlgos"/>
 <use name="DataFormats/VertexReco"/>
 <use name="DataFormats/PatCandidates"/>
+<use name="DataFormats/Common"/>
 <use name="IndiaCMSTutorial/ZTnP"/>
+<use name="root"/>
 <flags EDM_PLUGIN="1"/>

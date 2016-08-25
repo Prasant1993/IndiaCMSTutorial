@@ -2,8 +2,15 @@
 
 ZmumuTnP::ZmumuTnP(const edm::ParameterSet& iConfig) :
   vtxToken_(consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("vertices"))),
-  muonToken_(consumes<pat::MuonCollection>(iConfig.getParameter<edm::InputTag>("muons")))
+  muonToken_(consumes<pat::MuonCollection>(iConfig.getParameter<edm::InputTag>("muons"))),
+  triggerBits_(consumes<edm::TriggerResults>(iConfig.getParameter<edm::InputTag>("bits"))),
+  triggerObjects_(consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("objects")))
 {
+
+   hltPathName=iConfig.getParameter<std::string>("hltPath");
+   hltFilterName=iConfig.getParameter<std::string>("hltFilter"); 
+   DeltaR_=iConfig.getParameter<double>("DeltaR");
+	
    //now do what ever initialization is needed
    usesResource("TFileService");
    edm::Service<TFileService> outFile;
@@ -66,6 +73,13 @@ ZmumuTnP::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
   selectedMu_.clear();
   nTnP = 0;
+  
+  edm::Handle<edm::TriggerResults> triggerBits;
+  iEvent.getByToken(triggerBits_, triggerBits);
+
+  edm::Handle<pat::TriggerObjectStandAloneCollection> triggerObjects;
+  iEvent.getByToken(triggerObjects_, triggerObjects);
+
   //vertices
   edm::Handle<reco::VertexCollection> vertices;
   iEvent.getByToken(vtxToken_, vertices);
@@ -92,6 +106,21 @@ ZmumuTnP::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     if(!mu.isPFMuon())    continue;
     selectedMu_.push_back(mu);
   }
+  
+  const edm::TriggerNames &names = iEvent.triggerNames(*triggerBits);
+  unsigned int index=names.triggerIndex(hltPathName);
+  bool isPassed=triggerBits->accept(index);
+  std::cout<<hltPathName<<"\tindex= "<<index<<"\tPassed="<<isPassed<<std::endl;
+
+  if(!isPassed){
+	  std::cout<<hltPathName<<"is not fired"<<std::endl;
+	  return;
+  }	  	
+  
+  for (pat::TriggerObjectStandAlone obj : *triggerObjects) {
+		triggerObj_.push_back(obj);			
+  }
+  	
   if(selectedMu_.size() > 2)   selectZmumu();
   nselectedMu = selectedMu_.size();
   outTree_->Fill();
@@ -111,7 +140,9 @@ void ZmumuTnP::selectZmumu() {
       int probecharge = selectedMu_[j].charge();
       if(tagcharge + probecharge != 0)      continue;
       if(nTnP >= 8)    continue; 
+      isMatched=isMatchedtoTrigger(selectedMu_[j], DeltaR_);
       TLorentzVector probeP4 = getP4(selectedMu_[j]);
+      
       TLorentzVector TnP = (tagP4 + probeP4);
       if( TnP.M() <= 80. || TnP.M() >= 100. )   continue;
       double proberelIso = mupfiso(selectedMu_[j])/selectedMu_[j].pt();
@@ -168,6 +199,34 @@ double ZmumuTnP::mupfiso(const pat::Muon& mu) {
           + std::max(0., mu.pfIsolationR03().sumNeutralHadronEt
                        + mu.pfIsolationR03().sumPhotonEt - 0.5 * mu.pfIsolationR03().sumPUPt));
 }
+
+// function for matching pat(reco) muon with its trigger object
+
+bool ZmumuTnP::isMatchedtoTrigger (const pat::Muon& mu, double hlt2reco_deltaRmax){
+	bool isMatch=false;
+    
+	for(unsigned int i = 0; i < triggerObj_.size(); i++){            
+			
+		isPath = triggerObj_[i].hasPathName(hltPathName);
+		isFilter =  triggerObj_[i].hasFilterLabel(hltFilterName);      
+		if(!isPath || !isFilter) continue;
+		else{
+			dEta=mu.eta() - triggerObj_[i].eta();
+			dPhi=TVector2:: Phi_mpi_pi(mu.phi() - triggerObj_[i].phi());
+			dR = sqrt(pow(dEta,2)+pow(dPhi,2));
+//			ptRatio= obj.pt()/mu.pt() ; 
+			if(dR < hlt2reco_deltaRmax){
+				isMatch=true;
+				std::cout<<"===== kinematic info of Matched Trigger object ===="<<std::endl;
+				std::cout<<"pt= "<<triggerObj_[i].pt()<<"\tabs(eta)= "<<fabs(triggerObj_[i].eta())<<"\tphi= "<<triggerObj_[i].phi()<<std::endl;
+				break;		
+			}
+		}
+	}
+	return isMatch;
+}			
+	 
+
 // ------------ method called once each job just before starting event loop  ------------
 void 
 ZmumuTnP::beginJob()
