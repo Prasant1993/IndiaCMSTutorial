@@ -24,6 +24,9 @@
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
+#include "DataFormats/PatCandidates/interface/PackedGenParticle.h"
+#include "DataFormats/Candidate/interface/Candidate.h"
 //
 // class declaration
 //
@@ -65,6 +68,8 @@ class ZPrime : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
       // ----------member data ---------------------------
       edm::EDGetTokenT<reco::VertexCollection> vtxToken_;
       edm::EDGetTokenT<pat::MuonCollection> muonToken_;
+      edm::EDGetTokenT<reco::GenParticle> prunedGenToken_;
+      edm::EDGetTokenT<pat::PackedGenParticle> packedGenToken_;
        
       std::vector<pat::Muon>  selectedMu_;
       Dimuon bestZpcand_;
