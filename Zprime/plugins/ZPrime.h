@@ -74,9 +74,14 @@ class ZPrime : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
       edm::EDGetTokenT<std::vector<pat::PackedGenParticle>> packedGenToken_;
        
       std::vector<pat::Muon>  selectedMu_;
+      std::vector<pat::PackedGenParticle> genZpdaughter_;
+
       Dimuon bestZpcand_;
       TH1D* mZp_reco;
       TH1D* mu1Pt_reco;
       TH1D* mu2Pt_reco;
+      TH1D* mZp_genDau;
+      TH1D* mu1Pt_gen;
+      TH1D* mu2Pt_gen;
 };
 #endif

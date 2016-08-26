@@ -20,7 +20,9 @@ ZPrime::ZPrime(const edm::ParameterSet& iConfig) :
   mZp_reco = outFile->make<TH1D>("mZp","ZRrime Mass;m_Zp;#entries",2000,0.,4000.); 
   mu1Pt_reco = outFile->make<TH1D>("muon1Pt","Leading lepton Pt;mu1_pT;#entries",2000,0.,4000.);
   mu2Pt_reco = outFile->make<TH1D>("muon2Pt","Sub-Leading lepton Pt;mu2_pT;#entries",2000,0.,4000.);
-
+  mZp_genDau = outFile->make<TH1D>("mZp_gen","ZRrime Mass from Daughters at Gen Level;m_Zp(Gen);#entries",2000,0.,4000.); 
+  mu1Pt_gen = outFile->make<TH1D>("muon1Pt_gen","Leading lepton Pt at Gen Level;mu1_pT(Gen);#entries",2000,0.,4000.);
+  mu2Pt_gen = outFile->make<TH1D>("muon2Pt_gen","Sub-Leading lepton Pt at Gen Level;mu2_pT(Gen);#entries",2000,0.,4000.);
 }
 
 
@@ -42,6 +44,7 @@ void
 ZPrime::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
   selectedMu_.clear();
+  genZpdaughter_.clear();
   //vertices
   edm::Handle<reco::VertexCollection> vertices;
   iEvent.getByToken(vtxToken_, vertices);
@@ -90,6 +93,20 @@ ZPrime::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       mu1Pt_reco->Fill(bestZpcand_.mu2P4.Pt());
     }
   }
+  //Gen level Analysis
+  checkGenlevel(pruned, packed);
+  if(genZpdaughter_.size() > 1) {
+    TLorentzVector gmu1 = getP4(genZpdaughter_[0]);
+    TLorentzVector gmu2 = getP4(genZpdaughter_[1]);
+    mZp_genDau->Fill((gmu1+gmu2).M());
+    if(gmu1.Pt() > gmu2.Pt()) { 
+      mu1Pt_gen->Fill(gmu1.Pt());
+      mu2Pt_gen->Fill(gmu2.Pt());
+    } else {
+      mu1Pt_gen->Fill(gmu2.Pt());
+      mu2Pt_gen->Fill(gmu1.Pt());
+    }   
+  }
 }
              
 void ZPrime::selectrecoDimuons() {
@@ -132,7 +149,6 @@ void ZPrime::checkGenlevel(const edm::Handle<std::vector<reco::GenParticle>>& pr
   //let's try to find all status1 originating directly ZPrime decay 
 
 
-  //for(size_t i=0; i<pruned->size();i++) 
   for(const auto& gp : *pruned) { 
     //std::cout << "PdgID: " << gp.pdgId() 
     //          << " pt " << gp.pt() 
@@ -141,21 +157,23 @@ void ZPrime::checkGenlevel(const edm::Handle<std::vector<reco::GenParticle>>& pr
     //          << " phi: " << gp.mass() 
     //          << std::endl;
     
-    
-    if( std::abs(gp.pdgId()) == 23) {
-	std::cout << "  found daugthers: " << std::endl;
-	for(size_t j=0; j<packed->size();j++){
-	  //get the pointer to the first survied ancestor of a given 
-	  //packed GenParticle in the prunedCollection 
-	  const reco::Candidate * motherInPrunedCollection = (*packed)[j].mother(0) ;
-	  if(motherInPrunedCollection != nullptr && isAncestor( &gp , motherInPrunedCollection)){
-	    std::cout << "     PdgID: " << (*packed)[j].pdgId() 
-		      << " pt " << (*packed)[j].pt() 
-		      << " eta: " << (*packed)[j].eta() 
-		      << " phi: " << (*packed)[j].phi() << std::endl;
-	  }
-    	}
+    if(std::abs(gp.pdgId()) == 23 && gp.status() == 22) {
+      std::cout << "  found daugthers for Z with status: " << gp.status() << std::endl;
+      for(size_t j=0; j<packed->size();j++){
+        //get the pointer to the first survied ancestor of a given 
+	//packed GenParticle in the prunedCollection 
+        if(std::fabs(packed->at(j).pdgId()) != 13)     continue;
+	const reco::Candidate * motherInPrunedCollection = (*packed)[j].mother(0) ;
+	if(motherInPrunedCollection != nullptr && isAncestor( &gp , motherInPrunedCollection)){
+          genZpdaughter_.push_back(packed->at(j));
+	  std::cout << "     PdgID: " << (*packed)[j].pdgId() 
+		    << " pt " << (*packed)[j].pt() 
+		    << " eta: " << (*packed)[j].eta() 
+		    << " phi: " << (*packed)[j].phi() << std::endl;
+	}
       }
+    }
+    if(genZpdaughter_.size()==2)  break;
   }
 }
 // ------------ method called once each job just before starting event loop  ------------
