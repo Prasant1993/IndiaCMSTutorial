@@ -39,18 +39,18 @@ ZmumuTnP::ZmumuTnP(const edm::ParameterSet& iConfig) :
    outTree_->Branch("TnP_l2_relIso",TnP_l2_relIso,"TnP_l2_relIso[nTnP]/F");
    
    histoDir = new TFileDirectory(outFile->mkdir("Histos_zmumu"));
-   mZmmAll_ptl50_barrel = histoDir->make<TH1D>("mZmmAll_ptl50_barrel","Z Mass;m_Z;#entries",25,70.,120.); 
-   mZmmPass_ptl50_barrel  = histoDir->make<TH1D>("mZmmPass_ptl50_barrel","Z Mass;m_Z;#entries",25,70.,120.);
-   mZmmFail_ptl50_barrel = histoDir->make<TH1D>("mZmmFail_ptl50_barrel","Z Mass;m_Z;#entries",25,70.,120.);
-   mZmmAll_ptl50_endcap = histoDir->make<TH1D>("mZmmAll_ptl50_endcap","Z Mass;m_Z;#entries",25,70.,120.);
-   mZmmPass_ptl50_endcap = histoDir->make<TH1D>("mZmmPass_ptl50_endcap","Z Mass;m_Z;#entries",25,70.,120.);
-   mZmmFail_ptl50_endcap = histoDir->make<TH1D>("mZmmFail_ptl50_endcap","Z Mass;m_Z;#entries",25,70.,120.);
-   mZmmAll_ptg50_barrel = histoDir->make<TH1D>("mZmmAll_ptg50_barrel","Z Mass;m_Z;#entries",25,70.,120.);
-   mZmmPass_ptg50_barrel = histoDir->make<TH1D>("mZmmPass_ptg50_barrel","Z Mass;m_Z;#entries",25,70.,120.);
-   mZmmFail_ptg50_barrel = histoDir->make<TH1D>("mZmmFail_ptg50_barrel","Z Mass;m_Z;#entries",25,70.,120.);
-   mZmmAll_ptg50_endcap = histoDir->make<TH1D>("mZmmAll_ptg50_endcap","Z Mass;m_Z;#entries",25,70.,120.);
-   mZmmPass_ptg50_endcap = histoDir->make<TH1D>("mZmmPass_ptg50_endcap","Z Mass;m_Z;#entries",25,70.,120.);
-   mZmmFail_ptg50_endcap = histoDir->make<TH1D>("mZmmFail_ptg50_endcap","Z Mass;m_Z;#entries",25,70.,120.);
+   mZmmAll_ptl50_barrel = histoDir->make<TH1D>("mZmmAll_ptl50_barrel","Z Mass;m_Z;#entries",50,70.,120.); 
+   mZmmPass_ptl50_barrel  = histoDir->make<TH1D>("mZmmPass_ptl50_barrel","Z Mass;m_Z;#entries",50,70.,120.);
+   mZmmFail_ptl50_barrel = histoDir->make<TH1D>("mZmmFail_ptl50_barrel","Z Mass;m_Z;#entries",50,70.,120.);
+   mZmmAll_ptl50_endcap = histoDir->make<TH1D>("mZmmAll_ptl50_endcap","Z Mass;m_Z;#entries",50,70.,120.);
+   mZmmPass_ptl50_endcap = histoDir->make<TH1D>("mZmmPass_ptl50_endcap","Z Mass;m_Z;#entries",50,70.,120.);
+   mZmmFail_ptl50_endcap = histoDir->make<TH1D>("mZmmFail_ptl50_endcap","Z Mass;m_Z;#entries",50,70.,120.);
+   mZmmAll_ptg50_barrel = histoDir->make<TH1D>("mZmmAll_ptg50_barrel","Z Mass;m_Z;#entries",50,70.,120.);
+   mZmmPass_ptg50_barrel = histoDir->make<TH1D>("mZmmPass_ptg50_barrel","Z Mass;m_Z;#entries",50,70.,120.);
+   mZmmFail_ptg50_barrel = histoDir->make<TH1D>("mZmmFail_ptg50_barrel","Z Mass;m_Z;#entries",50,70.,120.);
+   mZmmAll_ptg50_endcap = histoDir->make<TH1D>("mZmmAll_ptg50_endcap","Z Mass;m_Z;#entries",50,70.,120.);
+   mZmmPass_ptg50_endcap = histoDir->make<TH1D>("mZmmPass_ptg50_endcap","Z Mass;m_Z;#entries",50,70.,120.);
+   mZmmFail_ptg50_endcap = histoDir->make<TH1D>("mZmmFail_ptg50_endcap","Z Mass;m_Z;#entries",50,70.,120.);
 }
 
 
@@ -72,6 +72,7 @@ void
 ZmumuTnP::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
   selectedMu_.clear();
+  triggerObj_.clear();
   nTnP = 0;
   
   edm::Handle<edm::TriggerResults> triggerBits;
@@ -110,10 +111,10 @@ ZmumuTnP::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   names = iEvent.triggerNames(*triggerBits);
   unsigned int index=names.triggerIndex(hltPathName);
   bool isPassed=triggerBits->accept(index);
-  std::cout<<hltPathName<<"\tindex= "<<index<<"\tPassed="<<isPassed<<std::endl;
+  //std::cout<<hltPathName<<"\tindex= "<<index<<"\tPassed="<<isPassed<<std::endl;
 
   if(!isPassed){
-	  std::cout<<hltPathName<<" is not fired"<<std::endl;
+	  //std::cout<<hltPathName<<" is not fired"<<std::endl;
 	  return;
   }	  	
   
@@ -143,12 +144,12 @@ void ZmumuTnP::selectZmumu() {
       if(tagcharge + probecharge != 0)      continue;
       if(nTnP >= 8)    continue; 
       isMatched=isMatchedtoTrigger(selectedMu_[j], DeltaR_);
-      std::cout<<"probeIndex= "<<j<<"\tisMatchedtoTrigger= "<<(int)isMatched<<std::endl;
+     // std::cout<<"probeIndex= "<<j<<"\tisMatchedtoTrigger= "<<(int)isMatched<<std::endl;
 	  if(!isMatched) continue;
 	  TLorentzVector probeP4 = getP4(selectedMu_[j]);
       isMatched=false;
       TLorentzVector TnP = (tagP4 + probeP4);
-      if( TnP.M() <= 80. || TnP.M() >= 100. )   continue;
+      if( TnP.M() <= 70. || TnP.M() >= 110. )   continue;
       double proberelIso = mupfiso(selectedMu_[j])/selectedMu_[j].pt();
       TnP_pt[nTnP] = TnP.Pt();   
       TnP_eta[nTnP] = TnP.Eta();   
@@ -171,25 +172,26 @@ void ZmumuTnP::selectZmumu() {
       TnP_l2_charge[nTnP]= probecharge;   
       TnP_l2_relIso[nTnP]= proberelIso;
       nTnP++;
+
       if(probeP4.Pt() <= 50.) {
         if(std::fabs(probeP4.Eta()) < 1.2 ) {
           mZmmAll_ptl50_barrel->Fill(TnP.M());
-          mZmmPass_ptl50_barrel->Fill(TnP.M());
-          mZmmFail_ptl50_barrel->Fill(TnP.M());
+          if(proberelIso < 0.35)   mZmmPass_ptl50_barrel->Fill(TnP.M());
+          else                     mZmmFail_ptl50_barrel->Fill(TnP.M());
         } else {
           mZmmAll_ptl50_endcap->Fill(TnP.M());
-          mZmmPass_ptl50_endcap->Fill(TnP.M());
-          mZmmFail_ptl50_endcap->Fill(TnP.M());
+          if(proberelIso < 0.35)   mZmmPass_ptl50_endcap->Fill(TnP.M());
+          else                     mZmmFail_ptl50_endcap->Fill(TnP.M());
         }
       } else {
         if(std::fabs(probeP4.Eta()) < 1.2 ) {
           mZmmAll_ptg50_barrel->Fill(TnP.M());
-          mZmmPass_ptg50_barrel->Fill(TnP.M());
-          mZmmFail_ptg50_barrel->Fill(TnP.M());
+          if(proberelIso < 0.35)   mZmmPass_ptg50_barrel->Fill(TnP.M());
+          else                     mZmmFail_ptg50_barrel->Fill(TnP.M());
         } else {
           mZmmAll_ptg50_endcap->Fill(TnP.M());
-          mZmmPass_ptg50_endcap->Fill(TnP.M());
-          mZmmFail_ptg50_endcap->Fill(TnP.M());
+          if(proberelIso < 0.35)   mZmmPass_ptg50_endcap->Fill(TnP.M());
+          else                     mZmmFail_ptg50_endcap->Fill(TnP.M());
         }
       }
     }
@@ -220,8 +222,8 @@ bool ZmumuTnP::isMatchedtoTrigger (const pat::Muon& mu, double hlt2reco_deltaRma
 //		ptRatio= obj.pt()/mu.pt() ; 
 		if(dR < hlt2reco_deltaRmax){
 			isMatch=true;
-			std::cout<<"===== Kinematic info of Matched Trigger object ===="<<std::endl;
-			std::cout<<"pt= "<<triggerObj_[i].pt()<<"\tabs(eta)= "<<fabs(triggerObj_[i].eta())<<"\tphi= "<<triggerObj_[i].phi()<<std::endl;
+			//std::cout<<"===== Kinematic info of Matched Trigger object ===="<<std::endl;
+			//std::cout<<"pt= "<<triggerObj_[i].pt()<<"\tabs(eta)= "<<fabs(triggerObj_[i].eta())<<"\tphi= "<<triggerObj_[i].phi()<<std::endl;
 			break;		
 		}
 	}

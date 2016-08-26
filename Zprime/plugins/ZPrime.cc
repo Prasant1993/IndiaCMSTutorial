@@ -11,8 +11,8 @@
 ZPrime::ZPrime(const edm::ParameterSet& iConfig) :
   vtxToken_(consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("vertices"))),
   muonToken_(consumes<pat::MuonCollection>(iConfig.getParameter<edm::InputTag>("muons"))),
-  prunedGenToken_(consumes<reco::GenParticle>(iConfig.getParameter<edm::InputTag>("pruned"))),
-  packedGenToken_(consumes<pat::PackedGenParticle>(iConfig.getParameter<edm::InputTag>("packed")))
+  prunedGenToken_(consumes<std::vector<reco::GenParticle>>(iConfig.getParameter<edm::InputTag>("pruned"))),
+  packedGenToken_(consumes<std::vector<pat::PackedGenParticle>>(iConfig.getParameter<edm::InputTag>("packed")))
 {
   //now do what ever initialization is needed
   usesResource("TFileService");
@@ -49,11 +49,11 @@ ZPrime::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   const reco::Vertex &PV = vertices->front();
   
   // Pruned particles are the one containing "important" stuff
-  edm::Handle<reco::GenParticle> pruned;
+  edm::Handle<std::vector<reco::GenParticle>> pruned;
   iEvent.getByToken(prunedGenToken_,pruned);
   // Packed particles are all the status 1, so usable to remake jets
   // The navigation from status 1 to pruned is possible (the other direction should be made by hand)
-  edm::Handle<pat::PackedGenParticle> packed;
+  edm::Handle<std::vector<pat::PackedGenParticle>> packed;
   iEvent.getByToken(packedGenToken_,packed);
   //do GenLevel Analysis
   checkGenlevel(pruned,packed);
@@ -126,42 +126,38 @@ bool ZPrime::isAncestor(const reco::Candidate* ancestor, const reco::Candidate *
 }
 
 //check Zp to mumu at gen level
-void ZPrime::checkGenlevel(const edm::Handle<reco::GenParticle>& pruned,              
-                           const edm::Handle<pat::PackedGenParticle>& packed) {
+void ZPrime::checkGenlevel(const edm::Handle<std::vector<reco::GenParticle>>& pruned,              
+                           const edm::Handle<std::vector<pat::PackedGenParticle>>& packed) {
   
   //let's try to find all status1 originating directly ZPrime decay 
-  for(size_t i=0; i<pruned->size();i++) { 
-    const Candidate * Zprime = &(*pruned)[i];
-    std::cout << "PdgID: " << Zprime->pdgId() 
-              << " pt " << Zprime->pt() 
-              << " eta: " << Zprime->eta() 
-              << " phi: " << Zprime->phi() 
-              << std::endl;
+
+
+  //for(size_t i=0; i<pruned->size();i++) 
+  for(const auto& gp : *pruned) { 
+    //std::cout << "PdgID: " << gp.pdgId() 
+    //          << " pt " << gp.pt() 
+    //          << " eta: " << gp.eta() 
+    //          << " phi: " << gp.phi() 
+    //          << " phi: " << gp.mass() 
+    //          << std::endl;
     
-    /*
-    if(std::abs((*pruned)[i].pdgId()) > 500 && std::abs((*pruned)[i].pdgId()) <600){
-      const Candidate * Zprime = &(*pruned)[i];
-      std::cout << "PdgID: " << Zprime->pdgId() 
-                << " pt " << Zprime->pt() 
-                << " eta: " << Zprime->eta() 
-                << " phi: " << Zprime->phi() 
-                << std::endl;
-      std::cout << "  found daugthers: " << std::endl;
-      for(size_t j=0; j<packed->size();j++){
-        //get the pointer to the first survied ancestor of a given 
-        //packed GenParticle in the prunedCollection 
-        const Candidate * motherInPrunedCollection = (*packed)[j].mother(0) ;
-        if(motherInPrunedCollection != nullptr && isAncestor( Zprime , motherInPrunedCollection)){
-          std::cout << "     PdgID: " << (*packed)[j].pdgId() 
-                    << " pt " << (*packed)[j].pt() 
-                    << " eta: " << (*packed)[j].eta() 
-                    << " phi: " << (*packed)[j].phi() << std::endl;
-        }
+    
+    if( std::abs(gp.pdgId()) == 23) {
+	std::cout << "  found daugthers: " << std::endl;
+	for(size_t j=0; j<packed->size();j++){
+	  //get the pointer to the first survied ancestor of a given 
+	  //packed GenParticle in the prunedCollection 
+	  const reco::Candidate * motherInPrunedCollection = (*packed)[j].mother(0) ;
+	  if(motherInPrunedCollection != nullptr && isAncestor( &gp , motherInPrunedCollection)){
+	    std::cout << "     PdgID: " << (*packed)[j].pdgId() 
+		      << " pt " << (*packed)[j].pt() 
+		      << " eta: " << (*packed)[j].eta() 
+		      << " phi: " << (*packed)[j].phi() << std::endl;
+	  }
+    	}
       }
-    }*/
   }
 }
-
 // ------------ method called once each job just before starting event loop  ------------
 void 
 ZPrime::beginJob()
