@@ -5,5 +5,4 @@
 <use name="PhysicsTools/UtilAlgos"/>
 <use name="DataFormats/PatCandidates"/>
 <use name="DataFormats/VertexReco"/>
-<use name="IndiaCMSTutorial/ExampleAnalysis"/>
 <flags EDM_PLUGIN="1"/>
