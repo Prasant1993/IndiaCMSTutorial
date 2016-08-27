@@ -18,7 +18,6 @@ process.GlobalTag.globaltag = '80X_mcRun2_asymptotic_v14'
 process.source = cms.Source("PoolSource",
     # replace 'myfile.root' with the source file you want to use
 	fileNames = cms.untracked.vstring(
-        #'file:/afs/cern.ch/work/s/sroychow/public/Indiacms/prod/CMSSW_8_0_12/src/step4.root'
         '/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_1400_2300/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/70000/449D7C8F-C63B-E611-B26C-00304867FD7B.root',
         '/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_1400_2300/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/70000/881A437D-A63B-E611-96C5-0025905745B8.root',
         '/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_1400_2300/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/70000/9639BE37-C63B-E611-ADE5-02163E00F456.root',
@@ -34,4 +33,13 @@ process.TFileService = cms.Service("TFileService",
 )
 
 #process.triggerFilter.hltInputTag = cms.untracked.InputTag('TriggerResults','','HLT')
-process.p = cms.Path(process.triggerFilter*process.zpdimuon)
+
+# Primary Vertex Selector
+process.selectedPrimaryVertices = cms.EDFilter("VertexSelector",
+  src = cms.InputTag('offlineSlimmedPrimaryVertices'),
+  cut = cms.string("!isFake && abs(z) <= 24 && abs(position.Rho) <= 2"),
+  filter = cms.bool(True)                                          
+)
+
+#process.p = cms.Path(process.triggerFilter*process.zpdimuon)
+process.p = cms.Path(process.triggerFilter*process.selectedPrimaryVertices*process.zpdimuon)
