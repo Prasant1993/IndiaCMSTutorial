@@ -33,4 +33,13 @@ process.TFileService = cms.Service("TFileService",
 )
 
 #process.triggerFilter.hltInputTag = cms.untracked.InputTag('TriggerResults','','HLT')
-process.p = cms.Path(process.triggerFilter*process.zpdimuon)
+
+# Primary Vertex Selector
+process.selectedPrimaryVertices = cms.EDFilter("VertexSelector",
+  src = cms.InputTag('offlineSlimmedPrimaryVertices'),
+  cut = cms.string("!isFake && abs(z) <= 24 && abs(position.Rho) <= 2"),
+  filter = cms.bool(True)                                          
+)
+
+#process.p = cms.Path(process.triggerFilter*process.zpdimuon)
+process.p = cms.Path(process.triggerFilter*process.selectedPrimaryVertices*process.zpdimuon)
