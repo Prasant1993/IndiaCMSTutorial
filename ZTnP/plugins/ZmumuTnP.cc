@@ -18,39 +18,10 @@ ZmumuTnP::ZmumuTnP(const edm::ParameterSet& iConfig) :
    outTree_->Branch("nselectedMu",&nselectedMu,"nselectedMu/I");
    outTree_->Branch("nTnP",&nTnP,"nTnP/I");
    outTree_->Branch("TnP_pt",TnP_pt,"TnP_pt[nTnP]/F");
-   outTree_->Branch("TnP_eta",TnP_eta,"TnP_eta[nTnP]/F");
-   outTree_->Branch("TnP_phi",TnP_phi,"TnP_phi[nTnP]/F");
-   outTree_->Branch("TnP_mass",TnP_mass,"TnP_mass[nTnP]/F");
-   //tag properties
-   outTree_->Branch("TnP_l1_pdgId",TnP_l1_pdgId,"TnP_l1_pdgId[nTnP]/I");
-   outTree_->Branch("TnP_l1_pt",TnP_l1_pt,"TnP_l1_pt[nTnP]/F");
-   outTree_->Branch("TnP_l1_eta",TnP_l1_eta,"TnP_l1_eta[nTnP]/F");
-   outTree_->Branch("TnP_l1_phi",TnP_l1_phi,"TnP_l1_phi[nTnP]/F");
-   outTree_->Branch("TnP_l1_mass",TnP_l1_mass,"TnP_l1_mass[nTnP]/F");
-   outTree_->Branch("TnP_l1_charge",TnP_l1_charge,"TnP_l1_charge[nTnP]/I");
-   outTree_->Branch("TnP_l1_relIso",TnP_l1_relIso,"TnP_l1_relIso[nTnP]/F");
-   //probe properties
-   outTree_->Branch("TnP_l2_pdgId",TnP_l2_pdgId,"TnP_l2_pdgId[nTnP]/I");
-   outTree_->Branch("TnP_l2_pt",TnP_l2_pt,"TnP_l2_pt[nTnP]/F");
-   outTree_->Branch("TnP_l2_eta",TnP_l2_eta,"TnP_l2_eta[nTnP]/F");
-   outTree_->Branch("TnP_l2_phi",TnP_l2_phi,"TnP_l2_phi[nTnP]/F");
-   outTree_->Branch("TnP_l2_mass",TnP_l2_mass,"TnP_eta[nTnP]/F");
-   outTree_->Branch("TnP_l2_charge",TnP_l2_charge,"TnP_l2_charge[nTnP]/I");
-   outTree_->Branch("TnP_l2_relIso",TnP_l2_relIso,"TnP_l2_relIso[nTnP]/F");
-   
+   //**Create the other branches in the tree here   
+
    histoDir = new TFileDirectory(outFile->mkdir("Histos_zmumu"));
-   mZmmAll_ptl50_barrel = histoDir->make<TH1D>("mZmmAll_ptl50_barrel","Z Mass;m_Z;#entries",50,70.,120.); 
-   mZmmPass_ptl50_barrel  = histoDir->make<TH1D>("mZmmPass_ptl50_barrel","Z Mass;m_Z;#entries",50,70.,120.);
-   mZmmFail_ptl50_barrel = histoDir->make<TH1D>("mZmmFail_ptl50_barrel","Z Mass;m_Z;#entries",50,70.,120.);
-   mZmmAll_ptl50_endcap = histoDir->make<TH1D>("mZmmAll_ptl50_endcap","Z Mass;m_Z;#entries",50,70.,120.);
-   mZmmPass_ptl50_endcap = histoDir->make<TH1D>("mZmmPass_ptl50_endcap","Z Mass;m_Z;#entries",50,70.,120.);
-   mZmmFail_ptl50_endcap = histoDir->make<TH1D>("mZmmFail_ptl50_endcap","Z Mass;m_Z;#entries",50,70.,120.);
-   mZmmAll_ptg50_barrel = histoDir->make<TH1D>("mZmmAll_ptg50_barrel","Z Mass;m_Z;#entries",50,70.,120.);
-   mZmmPass_ptg50_barrel = histoDir->make<TH1D>("mZmmPass_ptg50_barrel","Z Mass;m_Z;#entries",50,70.,120.);
-   mZmmFail_ptg50_barrel = histoDir->make<TH1D>("mZmmFail_ptg50_barrel","Z Mass;m_Z;#entries",50,70.,120.);
-   mZmmAll_ptg50_endcap = histoDir->make<TH1D>("mZmmAll_ptg50_endcap","Z Mass;m_Z;#entries",50,70.,120.);
-   mZmmPass_ptg50_endcap = histoDir->make<TH1D>("mZmmPass_ptg50_endcap","Z Mass;m_Z;#entries",50,70.,120.);
-   mZmmFail_ptg50_endcap = histoDir->make<TH1D>("mZmmFail_ptg50_endcap","Z Mass;m_Z;#entries",50,70.,120.);
+   //**Book the mass histograms here
 }
 
 
@@ -92,19 +63,7 @@ ZmumuTnP::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   edm::Handle<pat::MuonCollection> muons;
   iEvent.getByToken(muonToken_, muons);
   for (const pat::Muon &mu : *muons) {
-    if(mu.pt() <= 5.) continue;
-    if(std::fabs(mu.eta()) > 2.4) continue;
-    reco::TrackRef tk = mu.muonBestTrack();
-    double dxyWrtPV = tk->dxy(PV.position());
-    double dzWrtPV = tk->dz(PV.position());
-    if(std::fabs(dxyWrtPV) >= 0.5 )      continue;
-    if(std::fabs(dzWrtPV) >= 1.) continue;
-    bool quality = (mu.isGlobalMuon()
-                    || ( mu.isTrackerMuon() && mu.numberOfMatches() >= 0)) 
-                    && mu.muonBestTrackType()!=2 ;
-    if(!quality) continue;
-    if(std::fabs(mu.dB(pat::Muon::PV3D)/mu.edB(pat::Muon::PV3D)) >= 4.)    continue;
-    if(!mu.isPFMuon())    continue;
+    //**Apply muon cuts here and select muons
     selectedMu_.push_back(mu);
   }
   
@@ -122,7 +81,7 @@ ZmumuTnP::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 		
 		triggerObj_.push_back(obj);			
   }
-  	
+  //Select Zmumu candidates in selectZmumu function	
   if(selectedMu_.size() > 2)   selectZmumu();
   nselectedMu = selectedMu_.size();
   outTree_->Fill();
@@ -130,27 +89,23 @@ ZmumuTnP::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 }
 //tag selection
 //pt > 20. and rel_iso03 < 0.35
-//tag + probe pair = OS + 80 < mass < 100
+//tag + probe pair = OS + 70 < mass < 110
 void ZmumuTnP::selectZmumu() {
   for(unsigned int i = 0; i < selectedMu_.size(); i++) {
     double tagrelIso = mupfiso(selectedMu_[i])/selectedMu_[i].pt();  
-    if(tagrelIso >= 0.35)     continue;
-    if(selectedMu_[i].pt() <= 20.)    continue;
+    //**Apply tag selection here
     TLorentzVector tagP4 = getP4(selectedMu_[i]);
     int tagcharge =  selectedMu_[i].charge();  
     for(unsigned int j = 0; j < selectedMu_.size(); j++) {
-      
-	  int probecharge = selectedMu_[j].charge();
-      if(tagcharge + probecharge != 0)      continue;
+      int probecharge = selectedMu_[j].charge();
+      //**Apply probe selection 
       if(nTnP >= 8)    continue; 
-      isMatched=isMatchedtoTrigger(selectedMu_[j], DeltaR_);
-     // std::cout<<"probeIndex= "<<j<<"\tisMatchedtoTrigger= "<<(int)isMatched<<std::endl;
-	  if(!isMatched) continue;
-	  TLorentzVector probeP4 = getP4(selectedMu_[j]);
-      isMatched=false;
+      TLorentzVector probeP4 = getP4(selectedMu_[j]);
       TLorentzVector TnP = (tagP4 + probeP4);
+      //TnP pair mass window cut
       if( TnP.M() <= 70. || TnP.M() >= 110. )   continue;
       double proberelIso = mupfiso(selectedMu_[j])/selectedMu_[j].pt();
+      //Fill out the tree variables
       TnP_pt[nTnP] = TnP.Pt();   
       TnP_eta[nTnP] = TnP.Eta();   
       TnP_phi[nTnP] = TnP.Phi();   
@@ -199,7 +154,7 @@ void ZmumuTnP::selectZmumu() {
 }
 
 //function to compute muon isolation
-
+//deltaB correction
 double ZmumuTnP::mupfiso(const pat::Muon& mu) {
   return (mu.pfIsolationR03().sumChargedHadronPt 
           + std::max(0., mu.pfIsolationR03().sumNeutralHadronEt
@@ -207,7 +162,6 @@ double ZmumuTnP::mupfiso(const pat::Muon& mu) {
 }
 
 // function for matching pat(reco) muon with its trigger object
-
 bool ZmumuTnP::isMatchedtoTrigger (const pat::Muon& mu, double hlt2reco_deltaRmax){
 	bool isMatch=false;
     
