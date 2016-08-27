@@ -8,6 +8,5 @@
 <use name="DataFormats/VertexReco"/>
 <use name="DataFormats/Math"/>
 <use name="DataFormats/Common"/>
-<use name="IndiaCMSTutorial/ExampleAnalysis"/>
 <use name="root"/>
 <flags EDM_PLUGIN="1"/>
