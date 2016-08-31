@@ -3,7 +3,6 @@
 ZeeTnP::ZeeTnP(const edm::ParameterSet& iConfig) :
   //vtxToken_(consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("vertices"))),
   electronToken_(consumes<pat::ElectronCollection>(iConfig.getParameter<edm::InputTag>("electrons")))
-  
 {
   //now do what ever initialization is needed
   usesResource("TFileService");
@@ -23,6 +22,7 @@ ZeeTnP::ZeeTnP(const edm::ParameterSet& iConfig) :
   outTree_->Branch("TnP_l1_mass",TnP_l1_mass,"TnP_l1_mass[nTnP]/F");
   outTree_->Branch("TnP_l1_charge",TnP_l1_charge,"TnP_l1_charge[nTnP]/I");
   outTree_->Branch("TnP_l1_relIso",TnP_l1_relIso,"TnP_l1_relIso[nTnP]/F");
+  outTree_->Branch("TnP_l1_sigmaIetaIeta",TnP_l1_sigmaIetaIeta,"TnP_l1_sigmaIetaIeta[nTnP]/F");
   //probe properties
   outTree_->Branch("TnP_l2_pdgId",TnP_l2_pdgId,"TnP_l2_pdgId[nTnP]/I");
   outTree_->Branch("TnP_l2_pt",TnP_l2_pt,"TnP_l2_pt[nTnP]/F");
@@ -31,20 +31,21 @@ ZeeTnP::ZeeTnP(const edm::ParameterSet& iConfig) :
   outTree_->Branch("TnP_l2_mass",TnP_l2_mass,"TnP_l2_mass[nTnP]/F");
   outTree_->Branch("TnP_l2_charge",TnP_l2_charge,"TnP_l2_charge[nTnP]/I");
   outTree_->Branch("TnP_l2_relIso",TnP_l2_relIso,"TnP_l2_relIso[nTnP]/F");
+  outTree_->Branch("TnP_l2_sigmaIetaIeta",TnP_l2_sigmaIetaIeta,"TnP_l2_sigmaIetaIeta[nTnP]/F");
   
   histoDir = new TFileDirectory(outFile->mkdir("Histos_zee"));
-  mZeeAll_ptl50_barrel = histoDir->make<TH1D>("mZeeAll_ptl50_barrel","Z Mass;m_Z;#entries",160,70.,110.); 
-  mZeePass_ptl50_barrel  = histoDir->make<TH1D>("mZeePass_ptl50_barrel","Z Mass;m_Z;#entries",160,70.,110.);
-  mZeeFail_ptl50_barrel = histoDir->make<TH1D>("mZeeFail_ptl50_barrel","Z Mass;m_Z;#entries",160,70.,110.);
-  mZeeAll_ptl50_endcap = histoDir->make<TH1D>("mZeeAll_ptl50_endcap","Z Mass;m_Z;#entries",160,70.,110.);
-  mZeePass_ptl50_endcap = histoDir->make<TH1D>("mZeePass_ptl50_endcap","Z Mass;m_Z;#entries",160,70.,110.);
-  mZeeFail_ptl50_endcap = histoDir->make<TH1D>("mZeeFail_ptl50_endcap","Z Mass;m_Z;#entries",160,70.,110.);
-  mZeeAll_ptg50_barrel = histoDir->make<TH1D>("mZeeAll_ptg50_barrel","Z Mass;m_Z;#entries",160,70.,110.);
-  mZeePass_ptg50_barrel = histoDir->make<TH1D>("mZeePass_ptg50_barrel","Z Mass;m_Z;#entries",160,70.,110.);
-  mZeeFail_ptg50_barrel = histoDir->make<TH1D>("mZeeFail_ptg50_barrel","Z Mass;m_Z;#entries",160,70.,110.);
-  mZeeAll_ptg50_endcap = histoDir->make<TH1D>("mZeeAll_ptg50_endcap","Z Mass;m_Z;#entries",160,70.,110.);
-  mZeePass_ptg50_endcap = histoDir->make<TH1D>("mZeePass_ptg50_endcap","Z Mass;m_Z;#entries",160,70.,110.);
-  mZeeFail_ptg50_endcap = histoDir->make<TH1D>("mZeeFail_ptg50_endcap","Z Mass;m_Z;#entries",160,70.,110.);
+  mZeeAll_ptl50_barrel = histoDir->make<TH1D>("mZeeAll_ptl50_barrel","Z Mass;m_Z;#entries",80,70.,110.); 
+  mZeePass_ptl50_barrel  = histoDir->make<TH1D>("mZeePass_ptl50_barrel","Z Mass;m_Z;#entries",80,70.,110.);
+  mZeeFail_ptl50_barrel = histoDir->make<TH1D>("mZeeFail_ptl50_barrel","Z Mass;m_Z;#entries",80,70.,110.);
+  mZeeAll_ptl50_endcap = histoDir->make<TH1D>("mZeeAll_ptl50_endcap","Z Mass;m_Z;#entries",80,70.,110.);
+  mZeePass_ptl50_endcap = histoDir->make<TH1D>("mZeePass_ptl50_endcap","Z Mass;m_Z;#entries",80,70.,110.);
+  mZeeFail_ptl50_endcap = histoDir->make<TH1D>("mZeeFail_ptl50_endcap","Z Mass;m_Z;#entries",80,70.,110.);
+  mZeeAll_ptg50_barrel = histoDir->make<TH1D>("mZeeAll_ptg50_barrel","Z Mass;m_Z;#entries",80,70.,110.);
+  mZeePass_ptg50_barrel = histoDir->make<TH1D>("mZeePass_ptg50_barrel","Z Mass;m_Z;#entries",80,70.,110.);
+  mZeeFail_ptg50_barrel = histoDir->make<TH1D>("mZeeFail_ptg50_barrel","Z Mass;m_Z;#entries",80,70.,110.);
+  mZeeAll_ptg50_endcap = histoDir->make<TH1D>("mZeeAll_ptg50_endcap","Z Mass;m_Z;#entries",80,70.,110.);
+  mZeePass_ptg50_endcap = histoDir->make<TH1D>("mZeePass_ptg50_endcap","Z Mass;m_Z;#entries",80,70.,110.);
+  mZeeFail_ptg50_endcap = histoDir->make<TH1D>("mZeeFail_ptg50_endcap","Z Mass;m_Z;#entries",80,70.,110.);
 }
 
 
@@ -146,11 +147,13 @@ void ZeeTnP::selectZee() {
   for (uint i =0; i < selectedEle_.size(); i++) {
     double tagrelIso = combinedRelativeIso(selectedEle_[i]);
     if(selectedEle_[i].pt() <= 35.)    continue;
-    if(selectedEle_[i].full5x5_sigmaIetaIeta() >= 0.00998) continue;
+    double tagsigmaIetaIeta = selectedEle_[i].full5x5_sigmaIetaIeta();
+    if(tagsigmaIetaIeta >= 0.00998) continue;
     TLorentzVector tagP4 = getP4(selectedEle_[i]);
     int tagcharge =  selectedEle_[i].charge();
     for(unsigned int j = 0; j < selectedEle_.size(); j++) {
       int probecharge = selectedEle_[j].charge();
+      double probesigmaIetaIeta = selectedEle_[j].full5x5_sigmaIetaIeta();
       if(tagcharge + probecharge != 0)      continue;
       if(nTnP >= 8)    continue; 
       TLorentzVector probeP4 = getP4(selectedEle_[j]);
@@ -169,6 +172,7 @@ void ZeeTnP::selectZee() {
       TnP_l1_mass[nTnP] = tagP4.M();   
       TnP_l1_charge[nTnP] = tagcharge;   
       TnP_l1_relIso[nTnP] = tagrelIso;
+      TnP_l1_sigmaIetaIeta[nTnP] = tagsigmaIetaIeta;
       //probe properties
       TnP_l2_pdgId[nTnP] = (probecharge > 0) ? -11 : 11;   
       TnP_l2_pt[nTnP] = probeP4.Pt();   
@@ -177,6 +181,7 @@ void ZeeTnP::selectZee() {
       TnP_l2_mass[nTnP]= probeP4.M();   
       TnP_l2_charge[nTnP]= probecharge;   
       TnP_l2_relIso[nTnP]= proberelIso;
+      TnP_l2_sigmaIetaIeta[nTnP] = probesigmaIetaIeta;
       nTnP++;
       if(probeP4.Pt() <= 50.) {
         if(std::fabs(probeP4.Eta()) <= 1.479) {

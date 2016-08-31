@@ -85,6 +85,7 @@ class ZeeTnP : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
   float         TnP_l1_mass[kMaxTnP];   
   int           TnP_l1_charge[kMaxTnP];   
   float         TnP_l1_relIso[kMaxTnP];
+  float         TnP_l1_sigmaIetaIeta[kMaxTnP];
   //probe properties
   int           TnP_l2_pdgId[kMaxTnP];   
   float         TnP_l2_pt[kMaxTnP];   
@@ -93,6 +94,7 @@ class ZeeTnP : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
   float         TnP_l2_mass[kMaxTnP];   
   int           TnP_l2_charge[kMaxTnP];   
   float         TnP_l2_relIso[kMaxTnP];
+  float         TnP_l2_sigmaIetaIeta[kMaxTnP];
   //Histogram booking
   TFileDirectory* histoDir;
   TH1D* mZeeAll_ptl50_barrel;
