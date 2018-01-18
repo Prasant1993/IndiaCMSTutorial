@@ -136,6 +136,10 @@ void ZmumuTnP::selectZmumu() {
     double tagrelIso = mupfiso(selectedMu_[i])/selectedMu_[i].pt();  
     if(tagrelIso >= 0.35)     continue;
     if(selectedMu_[i].pt() <= 20.)    continue;
+    isMatched=isMatchedtoTrigger(selectedMu_[i], DeltaR_);
+    //std::cout<<"probeIndex= "<<j<<"\tisMatchedtoTrigger= "<<(int)isMatched<<std::endl;
+    if(!isMatched) continue;
+    isMatched=false;
     TLorentzVector tagP4 = getP4(selectedMu_[i]);
     int tagcharge =  selectedMu_[i].charge();  
     for(unsigned int j = 0; j < selectedMu_.size(); j++) {
@@ -143,11 +147,7 @@ void ZmumuTnP::selectZmumu() {
 	  int probecharge = selectedMu_[j].charge();
       if(tagcharge + probecharge != 0)      continue;
       if(nTnP >= 8)    continue; 
-      isMatched=isMatchedtoTrigger(selectedMu_[j], DeltaR_);
-     // std::cout<<"probeIndex= "<<j<<"\tisMatchedtoTrigger= "<<(int)isMatched<<std::endl;
-	  if(!isMatched) continue;
 	  TLorentzVector probeP4 = getP4(selectedMu_[j]);
-      isMatched=false;
       TLorentzVector TnP = (tagP4 + probeP4);
       if( TnP.M() <= 70. || TnP.M() >= 110. )   continue;
       double proberelIso = mupfiso(selectedMu_[j])/selectedMu_[j].pt();
