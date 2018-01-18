@@ -16,8 +16,13 @@ ZPrime::ZPrime(const edm::ParameterSet& iConfig) :
 {
   //now do what ever initialization is needed
   usesResource("TFileService");
-  //edm::Service<TFileService> outFile;
-  //**Book Histograms here
+  edm::Service<TFileService> outFile;
+  mZp_reco = outFile->make<TH1D>("mZp","ZRrime Mass;m_Zp;#entries",2000,0.,4000.); 
+  mu1Pt_reco = outFile->make<TH1D>("muon1Pt","Leading lepton Pt;mu1_pT;#entries",2000,0.,4000.);
+  mu2Pt_reco = outFile->make<TH1D>("muon2Pt","Sub-Leading lepton Pt;mu2_pT;#entries",2000,0.,4000.);
+  mZp_genDau = outFile->make<TH1D>("mZp_gen","ZRrime Mass from Daughters at Gen Level;m_Zp(Gen);#entries",2000,0.,4000.); 
+  mu1Pt_gen = outFile->make<TH1D>("muon1Pt_gen","Leading lepton Pt at Gen Level;mu1_pT(Gen);#entries",2000,0.,4000.);
+  mu2Pt_gen = outFile->make<TH1D>("muon2Pt_gen","Sub-Leading lepton Pt at Gen Level;mu2_pT(Gen);#entries",2000,0.,4000.);
 }
 
 
@@ -61,21 +66,48 @@ ZPrime::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   iEvent.getByToken(muonToken_, muons);
   
   for (const pat::Muon &mu : *muons) {
-    //Apply muon cuts here
+    if (!mu.isGlobalMuon())   continue;
+    if (!mu.isTrackerMuon())  continue;
+    const reco::TrackRef& muTrack = mu.muonBestTrack();
+    if (muTrack->ptError()/muTrack->pt() > 0.3)  continue;
+    if (muTrack->pt() <= 53.)  continue;
+    if (std::fabs(muTrack->dxy(PV.position())) > 0.2)  continue;
+    if (std::fabs(mu.dB()) > 0.2)    continue;
+    if (mu.isolationR03().sumPt / mu.innerTrack()->pt() > 0.10 )  continue;
+    if (mu.globalTrack()->hitPattern().trackerLayersWithMeasurement() <= 5)  continue;
+    if (mu.globalTrack()->hitPattern().numberOfValidPixelHits() == 0)  continue;
+    if (mu.globalTrack()->hitPattern().numberOfValidMuonHits() == 0)   continue;
+    if (mu.numberOfMatchedStations() < 2)  continue;
     selectedMu_.push_back(mu);
   }
-  
-  //call selectrecoDimuons() to select the best dimuon pair
+  //std::cout << "Muon Size=" << muons->size() << "::Selected>>" << selectedMu_.size() << std::endl;
   if(selectedMu_.size() >= 2)   selectrecoDimuons();
-  //Fill reco level histograms if dimuon found
-
+  //std::cout << "Zprime Candidate=" << bestZpcand_.mZp << std::endl;
+  if(bestZpcand_.mZp > 0.) {
+    mZp_reco->Fill(bestZpcand_.mZp);
+    if(bestZpcand_.mu1P4.Pt() > bestZpcand_.mu2P4.Pt()) {
+      mu1Pt_reco->Fill(bestZpcand_.mu1P4.Pt());
+      mu2Pt_reco->Fill(bestZpcand_.mu2P4.Pt());
+    } else {
+      mu2Pt_reco->Fill(bestZpcand_.mu1P4.Pt());
+      mu1Pt_reco->Fill(bestZpcand_.mu2P4.Pt());
+    }
+  }
   //Gen level Analysis
   checkGenlevel(pruned, packed);
-  //Fill GenLevel histos
+  if(genZpdaughter_.size() > 1) {
+    TLorentzVector gmu1 = getP4(genZpdaughter_[0]);
+    TLorentzVector gmu2 = getP4(genZpdaughter_[1]);
+    mZp_genDau->Fill((gmu1+gmu2).M());
+    if(gmu1.Pt() > gmu2.Pt()) { 
+      mu1Pt_gen->Fill(gmu1.Pt());
+      mu2Pt_gen->Fill(gmu2.Pt());
+    } else {
+      mu1Pt_gen->Fill(gmu2.Pt());
+      mu2Pt_gen->Fill(gmu1.Pt());
+    }   
+  }
 }
-//dimuon formation
-//out of all selected muons, select the OS pair with highest sun pt
-//save the dimuon properties in the Dimuon struct             
 void ZPrime::selectrecoDimuons() {
   bestZpcand_.mu1P4.SetPtEtaPhiE(0.,0.,0.,0.);
   bestZpcand_.mu2P4.SetPtEtaPhiE(0.,0.,0.,0.);
@@ -84,7 +116,14 @@ void ZPrime::selectrecoDimuons() {
   for(unsigned int i = 0; i<selectedMu_.size(); i++) {
     TLorentzVector mu1P4 = getP4(selectedMu_[i]);
     for(unsigned int j = i+1; j<selectedMu_.size(); j++) { 
+      if(selectedMu_[i].charge() + selectedMu_[j].charge() != 0)   continue;
       TLorentzVector mu2P4 = getP4(selectedMu_[j]);
+      if(bestZpcand_.avgPt < (mu1P4.Pt() + mu2P4.Pt())/2.) {
+        bestZpcand_.mu1P4 = mu1P4;
+        bestZpcand_.mu2P4 = mu2P4;
+        bestZpcand_.mZp = (mu1P4 + mu2P4).M();
+        bestZpcand_.avgPt = (mu1P4.Pt() + mu2P4.Pt())/2.;
+      }
     }
   }
 }
@@ -116,7 +155,7 @@ void ZPrime::checkGenlevel(const edm::Handle<std::vector<reco::GenParticle>>& pr
     //          << std::endl;
     
     if(std::abs(gp.pdgId()) == 23 && gp.status() == 22) {
-      //std::cout << "  found daugthers for Z with status: " << gp.status() << std::endl;
+      std::cout << "  found daugthers for Z with status: " << gp.status() << std::endl;
       for(size_t j=0; j<packed->size();j++){
         //get the pointer to the first survied ancestor of a given 
 	//packed GenParticle in the prunedCollection 
@@ -124,10 +163,10 @@ void ZPrime::checkGenlevel(const edm::Handle<std::vector<reco::GenParticle>>& pr
 	const reco::Candidate * motherInPrunedCollection = (*packed)[j].mother(0) ;
 	if(motherInPrunedCollection != nullptr && isAncestor( &gp , motherInPrunedCollection)){
           genZpdaughter_.push_back(packed->at(j));
-	  //std::cout << "     PdgID: " << (*packed)[j].pdgId() 
-	  //	      << " pt " << (*packed)[j].pt() 
-	  //	      << " eta: " << (*packed)[j].eta() 
-	  //	      << " phi: " << (*packed)[j].phi() << std::endl;
+	  std::cout << "     PdgID: " << (*packed)[j].pdgId() 
+		    << " pt " << (*packed)[j].pt() 
+		    << " eta: " << (*packed)[j].eta() 
+		    << " phi: " << (*packed)[j].phi() << std::endl;
 	}
       }
     }

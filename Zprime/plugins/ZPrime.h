@@ -2,9 +2,6 @@
 #define __ZPrime_h
 // system include files
 #include <memory>
-
-// user include files
-#include <memory>
 #include <TDirectory.h>
 #include <TTree.h>
 #include <TH1.h>
@@ -43,6 +40,15 @@ struct Dimuon {
   double avgPt;
 };
 
+struct Dimuon {
+  TLorentzVector mu1P4;
+  TLorentzVector mu2P4;
+  int mu1Charge;
+  int mu2Charge;
+  double mZp;
+  double avgPt;
+};
+
 class ZPrime : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
    public:
       explicit ZPrime(const edm::ParameterSet&);
@@ -59,7 +65,6 @@ class ZPrime : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
       bool isAncestor(const reco::Candidate* ancestor, const reco::Candidate * particle);
       void checkGenlevel(const edm::Handle<std::vector<reco::GenParticle>>& pruned,
                          const edm::Handle<std::vector<pat::PackedGenParticle>>& packed);
-
    private:
       virtual void beginJob() override;
       virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
@@ -70,7 +75,6 @@ class ZPrime : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
       edm::EDGetTokenT<pat::MuonCollection> muonToken_;
       edm::EDGetTokenT<std::vector<reco::GenParticle>> prunedGenToken_;
       edm::EDGetTokenT<std::vector<pat::PackedGenParticle>> packedGenToken_;
-      
       std::vector<pat::Muon>  selectedMu_;
       std::vector<pat::PackedGenParticle> genZpdaughter_;
 
